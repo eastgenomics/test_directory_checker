@@ -286,3 +286,13 @@ def extract_panelapp_id(panels):
 def write_json(dict_data):
     with open("targets.json", "w") as f:
         json.dump(dict_data, f, indent=2)
+
+
+def write_test_methods(new_test_methods, removed_test_methods):
+    with open("potential_new_test_methods.txt", "w") as f:
+        for tm in sorted(new_test_methods):
+            f.write(f"{tm}\n")
+
+    with open("potential_removed_test_methods.txt", "w") as f:
+        for tm in sorted(removed_test_methods):
+            f.write(f"{tm}\n")
