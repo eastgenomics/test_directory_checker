@@ -3,12 +3,6 @@ import regex
 from test_directory_checker import utils
 
 
-def check_gene_symbols(targets):
-    # check that the gene symbols are unambiguous
-    # check that the gene symbols exist
-    pass
-
-
 def check_targets(targets, hgnc_dump):
     panels_list = {}
 
@@ -113,7 +107,11 @@ def check_targets(targets, hgnc_dump):
     return panels_list
 
 
-def check_test_methods():
+def check_test_methods(test_methods, config):
     # check for new test methods
     # check for typos
-    pass
+    test_methods_td = sorted(list(set(test_methods.values())))
+    test_methods_config = config["ngs_test_methods"]
+    diff_potential_new_tm = set(test_methods_td) - set(test_methods_config)
+    diff_potential_removed_tm = set(test_methods_config) - set(test_methods_td)
+    return diff_potential_new_tm, diff_potential_removed_tm
