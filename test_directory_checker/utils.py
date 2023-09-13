@@ -95,7 +95,7 @@ def find_hgnc_id(gene_symbol, hgnc_dump):
 
     df_res = pd.Series(
         [gene_symbol, None, None, None], index=[
-            "Gene symbol", "Selected HGNC ID", "Previous", "Alias"
+            "Gene symbol", "HGNC ID", "Previous", "Alias"
         ]
     )
 
