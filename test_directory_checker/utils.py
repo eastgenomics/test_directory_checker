@@ -48,6 +48,21 @@ def parse_hgnc_dump(hgnc_file):
     return df_with_none
 
 
+def parse_genepanels(genepanels):
+    """ Parse genepanels file
+
+    Args:
+        genepanels (str): Path to the genepanels file
+
+    Returns:
+        pd.Dataframe: Dataframe containing the data in the genepanels file
+    """
+
+    return pd.read_csv(
+        genepanels, delimiter="\t", columns=["ci", "panel", "gene"]
+    )
+
+
 def load_config(config):
     """ Load the JSON config for the test directory
 
@@ -238,7 +253,7 @@ def handle_list_panels(panels, hgnc_dump):
             return None
 
 
-def extract_panelapp_id(panels):
+def extract_panelapp_id(panel_match):
     """ Extract the panelapp id from the target in the test directory
 
     Args:
@@ -248,39 +263,18 @@ def extract_panelapp_id(panels):
         list: List of panelapp ids
     """
 
-    panelapp_ids = {}
+    panelapp_id_match = regex.match(
+        r"(?P<panelapp_id>\([0-9]+\))", panel_match
+    )
 
-    for panel in panels:
-        # find the panelapp id in the panel name
-        match = regex.findall(r"\([0-9]+\)", panel)
+    if panelapp_id_match:
+        cleaned_panelapp_id = panelapp_id_match.group(
+            "panelapp_id"
+        ).replace("(", "").replace(")", "")
 
-        if match:
-            res = []
-            for m in match:
-                # get the whole result and strip out the parentheses
-                result = m.strip("()")
-                res.append(result)
+        return cleaned_panelapp_id
 
-            panelapp_ids.setdefault("single_panel", []).append(
-                [panel, res]
-            )
-        else:
-            # it might be something like "(panelapp id & panelapp id)", true
-            # story
-            match = regex.search(r"\([0-9& ]+\)", panel)
-
-            if match:
-                result = match.group(0).strip("()")
-                data_to_add = [panel, [x.strip() for x in result.split("&")]]
-                panelapp_ids.setdefault("multiple_panel", []).append(
-                    [panel, data_to_add]
-                )
-            else:
-                panelapp_ids.setdefault("none", []).append(
-                    [panel, None]
-                )
-
-    return panelapp_ids
+    return None
 
 
 def write_json(dict_data):
