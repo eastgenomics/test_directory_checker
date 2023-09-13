@@ -93,6 +93,14 @@ def find_hgnc_id(gene_symbol, hgnc_dump):
         str: Hgnc id
     """
 
+    df_res = pd.Series(
+        [gene_symbol, None, None, None], index=[
+            "Gene symbol", "Selected HGNC ID", "Previous", "Alias"
+        ]
+    )
+
+    hgnc_id = None
+
     # pattern is the gene symbol and only the gene symbol
     pattern = fr"^{gene_symbol}$"
     # try and match the gene symbol in the Approved symbol column
@@ -133,42 +141,39 @@ def find_hgnc_id(gene_symbol, hgnc_dump):
             # check the size of the dataframes and do the appropriate action
             if len(df_previous_symbols) == 0 and len(df_alias_symbols) == 0:
                 # couldn't find a previous or alias symbol
-                return {"none": [gene_symbol, None]}
+                return df_res
+
             elif len(df_previous_symbols) == 1 and len(df_alias_symbols) == 0:
                 # found only a previous symbol, return the HGNC id
-                return {
-                    "previous": [
-                        gene_symbol, df_previous_symbols["HGNC ID"].to_list()[0]
-                    ]
-                }
+                hgnc_id = df_previous_symbols["HGNC ID"].to_list()[0]
+                df_res.at["Previous"] = True
+                df_res.at["Alias"] = False
+
             elif len(df_previous_symbols) == 0 and len(df_alias_symbols) == 1:
                 # found only a alias symbol, return the HGNC id
-                return {
-                    "alias": [
-                        gene_symbol, df_alias_symbols["HGNC ID"].to_list()[0]
-                    ]
-                }
-            elif len(df_previous_symbols) >= 1:
-                return {
-                    "multiple": [gene_symbol, None]
-                }
-            elif len(df_alias_symbols) >= 1:
-                return {
-                    "multiple": [gene_symbol, None]
-                }
+                hgnc_id = df_alias_symbols["HGNC ID"].to_list()[0]
+                df_res.at["Previous"] = False
+                df_res.at["Alias"] = True
+
             elif len(df_previous_symbols) >= 1 and len(df_alias_symbols) >= 1:
                 # found previous and alias symbols, cry
-                return {
-                    "multiple": [gene_symbol, None]
-                }
+                df_res.at["Previous"] = True
+                df_res.at["Alias"] = True
 
-        # some panel escaped checks
-        else:
-            return {
-                "none": [gene_symbol, None]
-            }
+            elif len(df_previous_symbols) >= 1:
+                df_res.at["Previous"] = True
+                df_res.at["Alias"] = False
+
+            elif len(df_alias_symbols) >= 1:
+                df_res.at["Previous"] = False
+                df_res.at["Alias"] = True
+
     else:
-        return {"main": [gene_symbol, data.iloc[0]]}
+        hgnc_id = data.iloc[0]
+
+    df_res.at["Selected HGNC ID"] = hgnc_id
+
+    return df_res
 
 
 def handle_list_panels(panels, hgnc_dump):
