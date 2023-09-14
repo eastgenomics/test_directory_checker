@@ -8,14 +8,26 @@ def main(args):
     td_config = utils.load_config(args["config"])
     td_data = utils.parse_td(args["test_directory"], config)
     hgnc_data = utils.parse_hgnc_dump(args["hgnc_dump"])
-    targets = checker.check_targets(
-        td_data.to_dict()["Target/Genes"], hgnc_data
+    genepanels_data = utils.parse_genepanels(args["genepanels"])
+
+    td_data = td_data.apply(
+        lambda row: checker.check_target(row, hgnc_data), axis=1
     )
-    new_test_methods, removed_test_methods = checker.check_test_methods(
-        td_data.to_dict()["Test Method"], td_config
+    td_data = td_data.apply(
+        lambda row: checker.check_test_method(row, td_config), axis=1
     )
-    utils.write_json(targets)
-    utils.write_test_methods(new_test_methods, removed_test_methods)
+
+    td_data = td_data.reindex(
+        columns=[
+            "Test ID", "Clinical Indication", "Target/Genes",
+            "Identified targets", "Test Method", "Potential new test methods",
+            "Potential removed test methods"
+        ]
+    )
+
+    # checker.compare_gp_td(td_data, genepanels_data, hgnc_data)
+
+    td_data.to_excel("Checked_td.xlsx", sheet_name="data", index=False)
 
 
 if __name__ == "__main__":
@@ -30,6 +42,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "hgnc_dump", help="HGNC dump downloaded from the genenames.org website"
+    )
+    parser.add_argument(
+        "genepanels",
+        help="Genepanels file to compare against the provided test directory"
     )
     parser.add_argument(
         "-c", "--config", help="Test directory parser config file"
