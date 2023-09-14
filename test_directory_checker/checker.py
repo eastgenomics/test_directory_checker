@@ -1,117 +1,65 @@
 import regex
 
-from test_directory_checker import utils
+from test_directory_checker import utils, identify
 
 
-def check_targets(targets, hgnc_dump):
-    panels_list = {}
-
-    # check that the panel ID matches the panel name
-    for i, target in targets.items():
-        # stupid weird dash that needs replacing
-        panels = target.replace("–", "-")
-        panels_comma = [p.strip() for p in panels.split(",")]
-        panels_semicolon = [p.strip() for p in panels.split(";")]
-
-        if panels_comma == panels_semicolon:
-            # regex to identify panelapp panels
-            if regex.match(
-                r"[A-Za-z0-9-()\ ]*\([0-9&\ ]+\)", panels_comma[0]
-            ):
-                res = utils.extract_panelapp_id(panels_comma)
-                panels_list.setdefault("panelapp", {})
-                panels_list["panelapp"].setdefault(list(res.keys())[0], []).extend(
-                    res[list(res.keys())[0]]
-                )
-                continue
-
-            # regex to identify gene symbol
-            if regex.match(r"[A-Z]+[A-Z0-9]+", panels_comma[0]):
-                hgnc_id_data = utils.find_hgnc_id(panels_comma[0], hgnc_dump)
-                panels_list.setdefault("gene", {})
-                panels_list["gene"].setdefault(list(hgnc_id_data.keys())[0], []).append(
-                    hgnc_id_data[list(hgnc_id_data.keys())[0]]
-                )
-                continue
-
-            # regex to identify the rest
-            if regex.match(r"[A-Za-z\ ]", panels_comma[0]):
-                panels_list.setdefault("other", []).append(panels_comma)
-                continue
-
-        else:
-            if len(panels_comma) == 1:
-                # try and rescue some panelapp panels
-                if regex.match(
-                    r"[A-Za-z0-9-()\ ,]*\([0-9]+\)", panels_comma[0]
-                ):
-                    res = utils.extract_panelapp_id(panels_comma)
-                    panels_list.setdefault("panelapp", {})
-                    panels_list["panelapp"].setdefault(list(res.keys())[0], []).extend(
-                        res[list(res.keys())[0]]
-                    )
-                    continue
-
-                else:
-                    # assume that we have lists of genes using semicolon
-                    pass
-                    # print("assume lists of gene semicolon", panels_comma)
-
-            elif len(panels_comma) >= 2:
-                cleaned_panels = utils.handle_list_panels(
-                    panels_comma, hgnc_dump
-                )
-
-                if cleaned_panels:
-                    for ele in cleaned_panels:
-                        panels_list.setdefault("gene", {})
-                        panels_list["gene"].setdefault(
-                            list(ele.keys())[0], []
-                        ).append(
-                            ele[list(ele.keys())[0]]
-                        )
-                    continue
-
-            if len(panels_semicolon) == 1:
-                # try and rescue some panelapp panels
-                if regex.match(
-                    r"[A-Za-z0-9-()\ ,]*\([0-9]+\)", panels_semicolon[0]
-                ):
-                    res = utils.extract_panelapp_id(panels_semicolon)
-                    panels_list.setdefault("panelapp", {})
-                    panels_list["panelapp"].setdefault(list(res.keys())[0], []).extend(
-                        res[list(res.keys())[0]]
-                    )
-                    continue
-
-                else:
-                    # assume that we have lists of genes not using comma
-                    # print("assume lists of gene comma", panels_semicolon)
-                    pass
-
-            elif len(panels_semicolon) >= 2:
-                cleaned_panels = utils.handle_list_panels(
-                    panels_semicolon, hgnc_dump
-                )
-
-                if cleaned_panels:
-                    for ele in cleaned_panels:
-                        panels_list.setdefault("gene", {})
-                        panels_list["gene"].setdefault(
-                            list(ele.keys())[0], []
-                        ).append(
-                            ele[list(ele.keys())[0]]
-                        )
-                    continue
-
-    return panels_list
+def check_target(row, hgnc_dump):
+    # stupid weird dash that needs replacing
+    target = row["Target/Genes"].replace("–", "-")
+    targets = identify.identify_target(target, hgnc_dump)
+    row["Identified targets"] = targets
+    return row
 
 
-def check_test_methods(test_methods, config):
+def check_test_method(row, config):
     # check for new test methods
     # check for typos
-    test_methods_td = sorted(list(set(test_methods.values())))
     test_methods_config = config["ngs_test_methods"]
-    diff_potential_new_tm = set(test_methods_td) - set(test_methods_config)
-    diff_potential_removed_tm = set(test_methods_config) - set(test_methods_td)
-    return diff_potential_new_tm, diff_potential_removed_tm
+    test_method = [row["Test Method"]]
+    diff_potential_new_tm = set(test_method) - set(test_methods_config)
+    diff_potential_removed_tm = set(test_methods_config) - set(test_method)
+    row["Potential new test methods"] = diff_potential_new_tm
+    row["Potential removed test methods"] = diff_potential_removed_tm
+    return row
+
+
+def compare_gp_td(td_data, genepanels_data, hgnc_dump):
+    for gemini_name in genepanels_data["ci"].unique():
+        r_code, ci_name = gemini_name.split("_")
+        data_for_r_code = genepanels_data[
+            genepanels_data["ci"] == gemini_name
+        ]
+
+        td_for_test_id = td_data[
+            td_data["Test ID"] == r_code
+        ]
+
+        if td_for_test_id.shape[0] == 1:
+            print("Check that the content didn't change")
+            targets = td_for_test_id["Target/Genes"]
+            check_targets(targets, hgnc_dump)
+        else:
+            print("Check if the test hasn't been replaced by another test")
+
+            td_for_r_code = td_data[
+                td_data["Test ID"] == r_code.split(".")[0]
+            ]
+
+            if td_for_r_code.shape[0] == 0:
+                print("Clinical indication has been removed")
+                continue
+            elif td_for_r_code.shape[0] == 1:
+                print((
+                    "Check if clinical indication has been replaced by new "
+                    "unique one"
+                ))
+            elif td_for_r_code.shape[0] >= 2:
+                print((
+                    "Check if clinical indication has been replaced by one of "
+                    "the new ones"
+                ))
+
+        for panel in data_for_r_code["panels"].unique():
+            genes = data_for_r_code[
+                data_for_r_code["panels"] == panel
+            ]["genes"].unique()
