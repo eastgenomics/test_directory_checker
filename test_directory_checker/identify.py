@@ -3,8 +3,6 @@ import regex
 import numpy as np
 import pandas as pd
 
-from test_directory_checker import utils
-
 
 def identify_target(target, hgnc_dump):
 
@@ -25,7 +23,7 @@ def identify_target(target, hgnc_dump):
     # regex to identify gene symbol
     if potential_gene_targets:
         for potential_gene in potential_gene_targets:
-            hgnc_id_data = utils.find_hgnc_id(potential_gene, hgnc_dump)
+            hgnc_id_data = find_hgnc_id(potential_gene, hgnc_dump)
 
             if hgnc_id_data["HGNC ID"]:
                 res["genes"].append(hgnc_id_data["HGNC ID"])
