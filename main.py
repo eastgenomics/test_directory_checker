@@ -1,5 +1,7 @@
 import argparse
 
+from panelapp import queries
+
 from test_directory_checker import checker, utils
 
 
@@ -9,6 +11,7 @@ def main(args):
     td_data = utils.parse_td(args["test_directory"], config)
     hgnc_data = utils.parse_hgnc_dump(args["hgnc_dump"])
     genepanels_data = utils.parse_genepanels(args["genepanels"])
+    signedoff_panels = queries.get_all_signedoff_panels()
 
     td_data = td_data.apply(
         lambda row: checker.check_target(row, hgnc_data), axis=1
@@ -25,7 +28,7 @@ def main(args):
         ]
     )
 
-    # checker.compare_gp_td(td_data, genepanels_data, hgnc_data)
+    checker.compare_gp_td(td_data, genepanels_data, hgnc_data, signedoff_panels)
 
     td_data.to_excel("Checked_td.xlsx", sheet_name="data", index=False)
 
