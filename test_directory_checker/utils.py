@@ -1,8 +1,6 @@
 import json
 
-import numpy as np
 import pandas as pd
-import regex
 
 
 def parse_td(test_directory, config):
@@ -76,4 +74,24 @@ def load_config(config):
     config = open(config)
     data = json.load(config)
     config.close()
+    return data
+
+
+def get_all_hgnc_ids_in_target(targets, signedoff_panels):
+    data = set()
+
+    for target_dict in targets:
+        for key, values in target_dict.items():
+            for value in values:
+                if value.isdigit():
+                    # assume it's a panelapp panel id
+                    panel = signedoff_panels[int(value)]
+                    data.update(
+                        [gene["hgnc_id"] for gene in panel.get_genes()]
+                    )
+
+                else:
+                    # assume it's an HGNC id
+                    data.add(value)
+
     return data
