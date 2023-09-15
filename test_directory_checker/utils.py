@@ -171,6 +171,6 @@ def find_hgnc_id(gene_symbol, hgnc_dump):
     else:
         hgnc_id = data.iloc[0]
 
-    df_res.at["Selected HGNC ID"] = hgnc_id
+    df_res.at["HGNC ID"] = hgnc_id
 
     return df_res
