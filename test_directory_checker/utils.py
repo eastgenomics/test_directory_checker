@@ -85,6 +85,10 @@ def get_all_hgnc_ids_in_target(targets, signedoff_panels):
             for value in values:
                 if value.isdigit():
                     # assume it's a panelapp panel id
+                    # 481 has been merged with 480
+                    if value == "481":
+                        continue
+
                     panel = signedoff_panels[int(value)]
                     data.update(
                         [gene["hgnc_id"] for gene in panel.get_genes()]
