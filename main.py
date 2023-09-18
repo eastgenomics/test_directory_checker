@@ -23,12 +23,14 @@ def main(args):
     td_data = td_data.reindex(
         columns=[
             "Test ID", "Clinical Indication", "Target/Genes",
-            "Identified targets", "Test Method", "Potential new test methods",
-            "Potential removed test methods"
+            "Identified panels", "Identified genes", "Test Method",
+            "Potential new test methods", "Potential removed test methods"
         ]
     )
 
-    checker.compare_gp_td(td_data, genepanels_data, hgnc_data, signedoff_panels)
+    checker.compare_gp_td(
+        td_data, genepanels_data, hgnc_data, signedoff_panels
+    )
 
     td_data.to_excel("Checked_td.xlsx", sheet_name="data", index=False)
 
