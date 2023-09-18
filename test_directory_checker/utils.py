@@ -1,4 +1,5 @@
 import json
+from typing import Iterable
 
 import pandas as pd
 
@@ -77,25 +78,35 @@ def load_config(config):
     return data
 
 
-def get_all_hgnc_ids_in_target(targets, signedoff_panels):
+def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
+    """ Get the HGNC ids from the panels/genes targets
+
+    Args:
+        targets (Iterable): Iterable containing the targets to extract HGNC ids
+        from
+        signedoff_panels (dict): Dict containing the panelapp ids and the
+        corresponding Panelapp panel objects
+
+    Returns:
+        set: Set of genes for all the targets
+    """
+
     data = set()
 
-    for target_dict in targets:
-        for key, values in target_dict.items():
-            for value in values:
-                if value.isdigit():
-                    # assume it's a panelapp panel id
-                    # 481 has been merged with 480
-                    if value == "481":
-                        continue
+    for target in targets:
+        if target.isdigit():
+            # assume it's a panelapp panel id
+            # 481 has been merged with 480
+            if target == "481":
+                continue
 
-                    panel = signedoff_panels[int(value)]
-                    data.update(
-                        [gene["hgnc_id"] for gene in panel.get_genes()]
-                    )
+            panel = signedoff_panels[int(target)]
+            data.update(
+                [gene["hgnc_id"] for gene in panel.get_genes()]
+            )
 
-                else:
-                    # assume it's an HGNC id
-                    data.add(value)
+        else:
+            # assume it's an HGNC id
+            data.add(target)
 
     return data
