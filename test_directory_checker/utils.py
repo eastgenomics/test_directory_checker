@@ -78,6 +78,11 @@ def load_config(config):
     return data
 
 
+def hgnc_query(hgnc_id, hgnc_dump):
+    row = hgnc_dump.loc[hgnc_dump["HGNC ID"] == hgnc_id]
+    return row
+
+
 def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
     """ Get the HGNC ids from the panels/genes targets
 
