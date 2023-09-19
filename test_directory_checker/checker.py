@@ -1,4 +1,5 @@
-import regex
+import numpy as np
+import pandas as pd
 
 from test_directory_checker import utils, identify
 
@@ -6,8 +7,9 @@ from test_directory_checker import utils, identify
 def check_target(row, hgnc_dump):
     # stupid weird dash that needs replacing
     target = row["Target/Genes"].replace("–", "-")
-    targets = identify.identify_target(target, hgnc_dump)
-    row["Identified targets"] = targets
+    row["Identified panels"], row["Identified genes"] = identify.identify_target(
+        target, hgnc_dump
+    )
     return row
 
 
@@ -23,21 +25,102 @@ def check_test_method(row, config):
     return row
 
 
-def compare_gp_td(td_data, genepanels_data, hgnc_dump):
+def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
+    identical_ci = pd.DataFrame(
+        [],
+        columns=[
+            "gemini_name", "panel", "genes", "td_target", "td_version",
+            "td_genes", "removed", "added"
+        ]
+    )
+
+    replaced_ci = pd.DataFrame(
+        [],
+        columns=[
+            "gemini_name", "panel", "genes", "td_target", "td_genes",
+            "removed", "added"
+        ]
+    )
+
+    gene_locus_type = {}
+
     for gemini_name in genepanels_data["ci"].unique():
-        r_code, ci_name = gemini_name.split("_")
+        data = {
+            "gemini_name": None, "panel": None, "genes": None,
+            "td_target": None, "td_genes": None, "removed": None, "added": None
+        }
+        data["gemini_name"] = gemini_name
+
+        gemini_name_splitted = gemini_name.split("_")
+        r_code = gemini_name_splitted[0]
+
         data_for_r_code = genepanels_data[
             genepanels_data["ci"] == gemini_name
         ]
+        genepanels_genes = set(data_for_r_code["gene"].unique())
+
+        data["panel"] = ", ".join(data_for_r_code["panel"].unique())
+        data["genes"] = ", ".join(sorted(list(genepanels_genes)))
+
+        if gemini_name.startswith("C"):
+            print("'C' clinical indications are bespoke, skipping")
+            continue
 
         td_for_test_id = td_data[
             td_data["Test ID"] == r_code
         ]
 
         if td_for_test_id.shape[0] == 1:
-            print("Check that the content didn't change")
-            targets = td_for_test_id["Target/Genes"]
-            check_targets(targets, hgnc_dump)
+            # Check that the content didn't change
+            # get list of HGNC ids for test directory and genepanels
+            identified_targets = np.concatenate(
+                (
+                    td_for_test_id["Identified panels"].to_numpy()[0],
+                    td_for_test_id["Identified genes"].to_numpy()[0]
+                ), axis=None
+            )
+
+            data["td_target"] = ", ".join(
+                td_for_test_id["Target/Genes"].to_numpy()
+            )
+
+            td_genes = set()
+
+            for gene in utils.get_all_hgnc_ids_in_target(
+                identified_targets, signedoff_panels
+            ):
+                if gene not in gene_locus_type:
+                    hgnc_info = utils.hgnc_query(gene, hgnc_dump)
+
+                    if (
+                        "RNA" in hgnc_info["Locus group"].to_numpy()[0] or
+                        hgnc_info["Chromosome"].to_numpy()[0] == "mitochondria"
+                    ):
+                        gene_locus_type[gene] = False
+                    else:
+                        gene_locus_type[gene] = True
+                        td_genes.add(gene)
+
+                else:
+                    if gene_locus_type[gene]:
+                        td_genes.add(gene)
+
+            data["td_version"] = ", ".join([
+                signedoff_panels[int(target)].get_version()
+                for target in td_for_test_id["Identified panels"].to_numpy()[0]
+                if target != "481"
+            ])
+
+            data["td_genes"] = ", ".join(sorted(list(td_genes)))
+            removed_genes = genepanels_genes - td_genes
+            new_genes = td_genes - genepanels_genes
+
+            if removed_genes:
+                data["removed"] = ", ".join(sorted(list(removed_genes)))
+
+            if new_genes:
+                data["added"] = ", ".join(sorted(list(new_genes)))
+
         else:
             print("Check if the test hasn't been replaced by another test")
 
@@ -59,7 +142,6 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump):
                     "the new ones"
                 ))
 
-        for panel in data_for_r_code["panels"].unique():
-            genes = data_for_r_code[
-                data_for_r_code["panels"] == panel
-            ]["genes"].unique()
+        identical_ci = identical_ci.append(data, ignore_index=True)
+
+    identical_ci.to_html("checked_td.html")
