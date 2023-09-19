@@ -4,7 +4,19 @@ import pandas as pd
 from test_directory_checker import utils, identify
 
 
-def check_target(row, hgnc_dump):
+def check_target(row: pd.Series, hgnc_dump: pd.DataFrame) -> pd.Series:
+    """ Check target and return the identified panels and genes
+
+    Args:
+        row (pd.Series): Pandas Series from the test directory
+        hgnc_dump (pd.DataFrame): Pandas Dataframe containing the data from the
+        HGNC dump file
+
+    Returns:
+        pd.Series: Pandas Series containing the new identified panels and
+        genes columns
+    """
+
     # stupid weird dash that needs replacing
     target = row["Target/Genes"].replace("–", "-")
     row["Identified panels"], row["Identified genes"] = identify.identify_target(
@@ -13,7 +25,18 @@ def check_target(row, hgnc_dump):
     return row
 
 
-def check_test_method(row, config):
+def check_test_method(row: pd.Series, config: dict) -> pd.Series:
+    """ Check the test method from the test directory
+
+    Args:
+        row (pd.Series): Pandas Series from the test directory
+        config (dict): Dict containing the data from the config file
+
+    Returns:
+        pd.Series: Pandas Series containing the potential new test methods and
+        removed test methods
+    """
+
     # check for new test methods
     # check for typos
     test_methods_config = config["ngs_test_methods"]
@@ -144,4 +167,4 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
 
         identical_ci = identical_ci.append(data, ignore_index=True)
 
-    identical_ci.to_html("checked_td.html")
+    identical_ci.to_html("ci_existing_in_both.html")

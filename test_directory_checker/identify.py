@@ -4,7 +4,17 @@ import numpy as np
 import pandas as pd
 
 
-def identify_target(target, hgnc_dump):
+def identify_target(target: str, hgnc_dump: pd.DataFrame) -> list:
+    """ Identify the target as gene or panel using regex
+
+    Args:
+        target (str): String for the target
+        hgnc_dump (pd.DataFrame): Pandas Dataframe containing the HGNC data
+
+    Returns:
+        list: List of 2 elements containing the identified panels and the
+        identified genes
+    """
 
     panels = []
     genes = []
