@@ -6,9 +6,8 @@ import pandas as pd
 
 def identify_target(target, hgnc_dump):
 
-    res = {}
-    res.setdefault("panels", [])
-    res.setdefault("genes", [])
+    panels = []
+    genes = []
 
     potential_panel_targets = regex.findall(r"\([0-9&\ ]+\)", target)
     potential_gene_targets = regex.findall(r"[A-Z]+[A-Z0-9]+", target)
@@ -18,7 +17,7 @@ def identify_target(target, hgnc_dump):
         for potential_panel in potential_panel_targets:
             cleaned_panelapp_id = potential_panel.replace(
                 "(", "").replace(")", "")
-            res["panels"].append(cleaned_panelapp_id)
+            panels.append(cleaned_panelapp_id)
 
     # regex to identify gene symbol
     if potential_gene_targets:
@@ -26,9 +25,9 @@ def identify_target(target, hgnc_dump):
             hgnc_id_data = find_hgnc_id(potential_gene, hgnc_dump)
 
             if hgnc_id_data["HGNC ID"]:
-                res["genes"].append(hgnc_id_data["HGNC ID"])
+                genes.append(hgnc_id_data["HGNC ID"])
 
-    return res
+    return panels, genes
 
 
 def find_hgnc_id(gene_symbol, hgnc_dump):
