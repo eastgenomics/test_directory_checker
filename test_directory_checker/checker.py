@@ -52,7 +52,7 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
     identical_ci = pd.DataFrame(
         [],
         columns=[
-            "gemini_name", "panel", "genes", "td_target", "td_version",
+            "gemini_name", "panel", "genes", "td_ci", "td_target", "td_version",
             "td_genes", "removed", "added"
         ]
     )
@@ -60,7 +60,7 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
     replaced_ci = pd.DataFrame(
         [],
         columns=[
-            "gemini_name", "panel", "genes", "td_target", "td_genes",
+            "gemini_name", "panel", "genes", "td_ci", "td_target", "td_genes",
             "removed", "added"
         ]
     )
@@ -69,7 +69,7 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
 
     for gemini_name in genepanels_data["ci"].unique():
         data = {
-            "gemini_name": None, "panel": None, "genes": None,
+            "gemini_name": None, "panel": None, "genes": None, "td_ci": None,
             "td_target": None, "td_genes": None, "removed": None, "added": None
         }
         data["gemini_name"] = gemini_name
@@ -94,46 +94,23 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
         ]
 
         if td_for_test_id.shape[0] == 1:
-            # Check that the content didn't change
-            # get list of HGNC ids for test directory and genepanels
-            identified_targets = np.concatenate(
-                (
-                    td_for_test_id["Identified panels"].to_numpy()[0],
-                    td_for_test_id["Identified genes"].to_numpy()[0]
-                ), axis=None
+            td_genes, gene_locus_type_update = utils.get_genes_from_td_target(
+                td_for_test_id, signedoff_panels, hgnc_dump, gene_locus_type
             )
 
+            gene_locus_type = {**gene_locus_type, **gene_locus_type_update}
+
+            data["td_ci"] = ", ".join(
+                td_for_test_id["Test ID"].to_numpy()
+            )
             data["td_target"] = ", ".join(
                 td_for_test_id["Target/Genes"].to_numpy()
             )
-
-            td_genes = set()
-
-            for gene in utils.get_all_hgnc_ids_in_target(
-                identified_targets, signedoff_panels
-            ):
-                if gene not in gene_locus_type:
-                    hgnc_info = utils.hgnc_query(gene, hgnc_dump)
-
-                    if (
-                        "RNA" in hgnc_info["Locus group"].to_numpy()[0] or
-                        hgnc_info["Chromosome"].to_numpy()[0] == "mitochondria"
-                    ):
-                        gene_locus_type[gene] = False
-                    else:
-                        gene_locus_type[gene] = True
-                        td_genes.add(gene)
-
-                else:
-                    if gene_locus_type[gene]:
-                        td_genes.add(gene)
-
             data["td_version"] = ", ".join([
                 signedoff_panels[int(target)].get_version()
                 for target in td_for_test_id["Identified panels"].to_numpy()[0]
                 if target != "481"
             ])
-
             data["td_genes"] = ", ".join(sorted(list(td_genes)))
             removed_genes = genepanels_genes - td_genes
             new_genes = td_genes - genepanels_genes
@@ -144,11 +121,13 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
             if new_genes:
                 data["added"] = ", ".join(sorted(list(new_genes)))
 
+            identical_ci = identical_ci.append(data, ignore_index=True)
+
         else:
             print("Check if the test hasn't been replaced by another test")
 
             td_for_r_code = td_data[
-                td_data["Test ID"] == r_code.split(".")[0]
+                td_data["Test ID"].str.contains(r_code.split(".")[0])
             ]
 
             if td_for_r_code.shape[0] == 0:
@@ -159,12 +138,42 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
                     "Check if clinical indication has been replaced by new "
                     "unique one"
                 ))
+                td_genes, gene_locus_type_update = utils.get_genes_from_td_target(
+                    td_for_r_code, signedoff_panels, hgnc_dump, gene_locus_type
+                )
+
+                gene_locus_type = {**gene_locus_type, **gene_locus_type_update}
+
+                data["td_ci"] = ", ".join(
+                    td_for_r_code["Test ID"].to_numpy()
+                )
+                data["td_target"] = ", ".join(
+                    td_for_r_code["Target/Genes"].to_numpy()
+                )
+                data["td_version"] = ", ".join([
+                    signedoff_panels[int(target)].get_version()
+                    for target in td_for_r_code["Identified panels"].to_numpy()[0]
+                    if target != "481"
+                ])
+                data["td_genes"] = ", ".join(sorted(list(td_genes)))
+
+                removed_genes = genepanels_genes - td_genes
+                new_genes = td_genes - genepanels_genes
+
+                if removed_genes:
+                    data["removed"] = ", ".join(sorted(list(removed_genes)))
+
+                if new_genes:
+                    data["added"] = ", ".join(sorted(list(new_genes)))
+
+                replaced_ci = replaced_ci.append(data, ignore_index=True)
+
             elif td_for_r_code.shape[0] >= 2:
                 print((
                     "Check if clinical indication has been replaced by one of "
                     "the new ones"
                 ))
 
-        identical_ci = identical_ci.append(data, ignore_index=True)
-
     identical_ci.to_html("ci_existing_in_both.html")
+
+    return identical_ci, replaced_ci
