@@ -1,6 +1,7 @@
 import json
 from typing import Iterable
 
+import numpy as np
 import pandas as pd
 
 
@@ -115,3 +116,42 @@ def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
             data.add(target)
 
     return data
+
+
+def get_genes_from_td_target(
+    td_data, signedoff_panels, hgnc_dump, gene_locus_type
+):
+    # Check that the content didn't change
+    # get list of HGNC ids for test directory and genepanels
+    identified_targets = np.concatenate(
+        (
+            td_data["Identified panels"].to_numpy()[0],
+            td_data["Identified genes"].to_numpy()[0]
+        ), axis=None
+    )
+
+    td_genes = set()
+
+    for gene in get_all_hgnc_ids_in_target(
+        identified_targets, signedoff_panels
+    ):
+        if gene not in gene_locus_type:
+            hgnc_info = hgnc_query(gene, hgnc_dump)
+
+            # RNA genes and mitochondrial genes are excluded from the
+            # genepanels file because we don't have transcripts for
+            # them
+            if (
+                "RNA" in hgnc_info["Locus group"].to_numpy()[0] or
+                hgnc_info["Chromosome"].to_numpy()[0] == "mitochondria"
+            ):
+                gene_locus_type[gene] = False
+            else:
+                gene_locus_type[gene] = True
+                td_genes.add(gene)
+
+        else:
+            if gene_locus_type[gene]:
+                td_genes.add(gene)
+
+    return td_genes, gene_locus_type
