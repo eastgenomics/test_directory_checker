@@ -209,5 +209,6 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
                     replaced_ci = replaced_ci.append(data, ignore_index=True)
 
     identical_ci.to_html("ci_existing_in_both.html")
+    replaced_ci.to_html("potential_replaced_ci.html")
 
     return identical_ci, replaced_ci
