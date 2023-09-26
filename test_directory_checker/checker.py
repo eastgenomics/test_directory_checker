@@ -174,6 +174,40 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
                     "the new ones"
                 ))
 
+                for i, row in td_for_r_code.iterrows():
+                    df = row.to_frame().T
+
+                    td_genes, gene_locus_type_update = utils.get_genes_from_td_target(
+                        df, signedoff_panels, hgnc_dump, gene_locus_type
+                    )
+                    gene_locus_type = {
+                        **gene_locus_type, **gene_locus_type_update
+                    }
+
+                    data["td_ci"] = ", ".join(
+                        df["Test ID"].to_numpy()
+                    )
+                    data["td_target"] = ", ".join(
+                        df["Target/Genes"].to_numpy()
+                    )
+                    data["td_version"] = ", ".join([
+                        signedoff_panels[int(target)].get_version()
+                        for target in df["Identified panels"].to_numpy()[0]
+                        if target != "481"
+                    ])
+                    data["td_genes"] = ", ".join(sorted(list(td_genes)))
+
+                    removed_genes = genepanels_genes - td_genes
+                    new_genes = td_genes - genepanels_genes
+
+                    if removed_genes:
+                        data["removed"] = ", ".join(sorted(list(removed_genes)))
+
+                    if new_genes:
+                        data["added"] = ", ".join(sorted(list(new_genes)))
+
+                    replaced_ci = replaced_ci.append(data, ignore_index=True)
+
     identical_ci.to_html("ci_existing_in_both.html")
 
     return identical_ci, replaced_ci
