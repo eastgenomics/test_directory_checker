@@ -208,6 +208,20 @@ def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
 
                     replaced_ci = replaced_ci.append(data, ignore_index=True)
 
+    identical_ci = identical_ci.reindex(
+        columns=[
+            "gemini_name", "panel", "genes", "td_ci", "td_target",
+            "td_version", "td_genes", "removed", "added"
+        ]
+    )
+
+    replaced_ci = replaced_ci.reindex(
+        columns=[
+            "gemini_name", "panel", "genes", "td_ci", "td_target",
+            "td_version", "td_genes", "removed", "added"
+        ]
+    )
+
     identical_ci.to_html("ci_existing_in_both.html")
     replaced_ci.to_html("potential_replaced_ci.html")
 
