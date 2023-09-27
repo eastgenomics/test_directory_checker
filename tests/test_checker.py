@@ -112,3 +112,43 @@ def test_compare_gp_td(td_data, genepanels_data, hgnc_dump):
         np.testing.assert_array_equal(
             replaced_cis[col].values, expected_replaced_cis[col].values
         )
+
+
+def test_find_new_clinical_indications(td_data, genepanels_data):
+    td_data = pd.read_csv(
+        td_data, sep="\t", keep_default_na=False,
+        converters={
+            "Identified panels": lambda x: x.strip("[]").split(", ") if x != "" else [],
+            "Identified genes": lambda x: x.strip("[]").split(", ") if x != "" else [],
+        }
+    )
+    genepanels_df = pd.read_csv(
+        genepanels_data, sep="\t", names=["ci", "panel", "gene"]
+    )
+
+    expected_new_cis = pd.DataFrame(
+        [
+            [
+                "R100.2", "Test panel", "525", ""
+            ],
+            [
+                "R134.2", "Familial hypercholesterolaemia", "772", ""
+            ],
+            [
+                "R134.3", "Familial hypercholesterolaemia", "", "HGNC:1228"
+            ],
+            [
+                "R500.1", "Test new panel", "100", ""
+            ],
+        ],
+        columns=[
+            "td_ci", "td_target", "identified_panels", "identified_genes"
+        ]
+    )
+
+    new_cis = checker.find_new_clinical_indications(td_data, genepanels_df)
+
+    for col in new_cis.columns:
+        np.testing.assert_array_equal(
+            new_cis[col].values, expected_new_cis[col].values
+        )
