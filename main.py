@@ -13,26 +13,38 @@ def main(args):
     genepanels_data = utils.parse_genepanels(args["genepanels"])
     signedoff_panels = queries.get_all_signedoff_panels()
 
-    td_data = td_data.apply(
+    target_data = td_data.apply(
         lambda row: checker.check_target(row, hgnc_data), axis=1
     )
-    td_data = td_data.apply(
+    test_method_data = td_data.apply(
         lambda row: checker.check_test_method(row, td_config), axis=1
     )
 
-    td_data = td_data.reindex(
+    target_data = target_data.reindex(
         columns=[
             "Test ID", "Clinical Indication", "Target/Genes",
-            "Identified panels", "Identified genes", "Test Method",
+            "Identified panels", "Identified genes", "Test Method"
+        ]
+    )
+
+    test_method_data = test_method_data.reindex(
+        columns=[
+            "Test ID", "Clinical Indication", "Test Method",
             "Potential new test methods", "Potential removed test methods"
         ]
     )
 
-    checker.compare_gp_td(
+    identical_ci, replaced_ci = checker.compare_gp_td(
         td_data, genepanels_data, hgnc_data, signedoff_panels
     )
 
-    td_data.to_excel("Checked_td.xlsx", sheet_name="data", index=False)
+    new_cis = checker.find_new_clinical_indications(td_data, genepanels_data)
+
+    identical_ci.to_html("ci_existing_in_both.html")
+    replaced_ci.to_html("potential_replaced_ci.html")
+    target_data.to_html("targets.html")
+    test_method_data.to_html("test_method.html")
+    new_cis.to_html("new_cis.html")
 
 
 if __name__ == "__main__":
