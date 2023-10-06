@@ -35,10 +35,12 @@ def main(args):
     )
 
     identical_ci, replaced_ci = checker.compare_gp_td(
-        td_data, genepanels_data, hgnc_data, signedoff_panels
+        target_data, genepanels_data, hgnc_data, signedoff_panels
     )
 
-    new_cis = checker.find_new_clinical_indications(td_data, genepanels_data)
+    new_cis = checker.find_new_clinical_indications(
+        target_data, genepanels_data
+    )
 
     identical_ci.to_html("ci_existing_in_both.html")
     replaced_ci.to_html("potential_replaced_ci.html")
