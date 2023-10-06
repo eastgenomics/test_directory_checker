@@ -1,8 +1,52 @@
+import json
+
 import numpy as np
 import pandas as pd
 from panelapp import queries
 
 from test_directory_checker import checker
+
+
+def test_check_target(hgnc_dump):
+    hgnc_dump = pd.read_csv(hgnc_dump, sep="\t")
+    row = pd.Series(["Thoracic aortic aneurysm or dissection (700)"], index=["Target/Genes"])
+    processed_row = checker.check_target(row, hgnc_dump)
+    expected_row = pd.Series(
+        [
+            "Thoracic aortic aneurysm or dissection (700)",
+            ["700"],
+            []
+        ],
+        index=["Target/Genes", "Identified panels", "Identified genes"]
+    )
+
+    np.testing.assert_array_equal(processed_row, expected_row)
+
+
+def test_check_test_method(config):
+    config = open(config)
+    data = json.load(config)
+    config.close()
+
+    row = pd.Series(["Small panel"], index=["Test Method"])
+    processed_row = checker.check_test_method(row, data)
+    expected_row = pd.Series(
+        [
+            "Small panel", set(), {
+                "WES or Medium panel", "Medium panel",
+                "Single gene testing (<10 amplicons)", "WES or Medium Panel",
+                "Single gene sequencing <=10 amplicons", "small panel",
+                "WES or Large penel", "WGS", "WES", "WES or Large panel",
+                "Single gene sequencing >=10 amplicons", "WES or Large Panel",
+                "Single gene sequencing <10 amplicons", "WES or Small Panel"
+            }
+        ], index=[
+            "Test Method", "Potential new test methods",
+            "Potential removed test methods"
+        ]
+    )
+
+    np.testing.assert_array_equal(processed_row, expected_row)
 
 
 def test_compare_gp_td(td_data, genepanels_data, hgnc_dump):
