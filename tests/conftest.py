@@ -5,6 +5,7 @@ def pytest_addoption(parser):
     parser.addoption("--td")
     parser.addoption("--genepanels")
     parser.addoption("--hgnc_dump")
+    parser.addoption("--config")
 
 
 @pytest.fixture
@@ -20,3 +21,8 @@ def genepanels_data(request):
 @pytest.fixture
 def hgnc_dump(request):
     return request.config.getoption("--hgnc_dump")
+
+
+@pytest.fixture
+def config(request):
+    return request.config.getoption("--config")
