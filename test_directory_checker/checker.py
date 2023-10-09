@@ -257,7 +257,21 @@ def compare_gp_td(
     return identical_tests, replaced_tests
 
 
-def find_new_clinical_indications(td_data, genepanels_df):
+def find_new_clinical_indications(
+    td_data: pd.DataFrame, genepanels_df: pd.DataFrame
+) -> pd.DataFrame:
+    """ Find new clinical indications i.e. present in the test directory but
+    not in the genepanels file
+
+    Args:
+        td_data (pd.DataFrame): Dataframe with test directory data
+        genepanels_df (pd.DataFrame): Dataframe with genepanels data
+
+    Returns:
+        pd.DataFrame: Dataframe containing the new tests from the test
+        directory
+    """
+
     new_cis = pd.DataFrame(
         [],
         columns=[
