@@ -47,6 +47,8 @@ It outputs an HTML representation of the dataframe containing the identified gen
 
 Output: `targets.html`
 
+![Alt text](image-1.png)
+
 ### Check the test methods
 
 Using the test directory, the code compares the test methods in the test directory and the ones in our config file that mimics the ones in the test directory parser.
@@ -54,17 +56,23 @@ It outputs an HTML representation of the dataframe containing the comparison of 
 
 Output: `test_methods.html`
 
+![Alt text](image-2.png)
+
 ### Compare genepanels and test directory
 
 Using the test directory and a genepanels file, the code compares the content of each clinical indication in the genepanels file and finds the corresponding test code or clinical indication code to find if the genepanels clinical indication contains the genepanels ci.
 
 Output: `ci_existing_in_both.html` + `potential_replaced_ci.html`
 
+![Alt text](image-3.png)
+
 ### Find new clinical indications
 
 The code will go through every test in the test directory and it will attempt to find tests missing from the genepanels file.
 
 Output: `new_cis.html`
+
+![Alt text](image-4.png)
 
 ## Unittesting
 
