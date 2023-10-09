@@ -45,7 +45,7 @@ def main(args):
     identical_ci.to_html("ci_existing_in_both.html")
     replaced_ci.to_html("potential_replaced_ci.html")
     target_data.to_html("targets.html")
-    test_method_data.to_html("test_method.html")
+    test_method_data.to_html("test_methods.html")
     new_cis.to_html("new_cis.html")
 
 
