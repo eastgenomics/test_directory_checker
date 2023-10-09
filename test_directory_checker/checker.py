@@ -48,7 +48,32 @@ def check_test_method(row: pd.Series, config: dict) -> pd.Series:
     return row
 
 
-def compare_gp_td(td_data, genepanels_data, hgnc_dump, signedoff_panels):
+def compare_gp_td(
+    td_data: pd.DataFrame, genepanels_data: pd.DataFrame,
+    hgnc_dump: pd.DataFrame, signedoff_panels: dict 
+) -> tuple:
+    """ Compare the test directory data and the genepanels data.
+    The code will look for test IDs and will compare the content resulting in 3
+    test cases:
+    - Found test ID in both test directory and genepanels --> compare content
+    - Didn't find test ID in both, look for clinical indication ID
+        - Didn't find clinical indication ID --> test has been removed
+        - Found clinical indication ID --> compare content of test IDs to check
+          if we can reproduce the same target content in genepanels
+
+    Args:
+        td_data (pd.DataFrame): Dataframe with the test directory data
+        genepanels_data (pd.DataFrame): Dataframe with the genepanels data
+        hgnc_dump (pd.DataFrame): Dataframe with the HGNC data
+        signedoff_panels (dict): Dict containing the signedoff panels from
+        Panelapp with the key being the Panelapp ID and the value being a Panel
+        object
+
+    Returns:
+        tuple: Tuple of 2 elements containing the identical/replaced test IDs
+        and the results of the content comparison.
+    """
+
     identical_ci = pd.DataFrame(
         [],
         columns=[
