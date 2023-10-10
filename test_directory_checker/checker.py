@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 from test_directory_checker import utils, identify
@@ -276,4 +275,8 @@ def find_new_clinical_indications(
 
     # extract the r codes from the genepanels file
     genepanels_rcodes = [ci.split("_")[0] for ci in genepanels_df["ci"].values]
+    td_data.drop(
+        ["Potential new test methods", "Potential removed test methods"],
+        inplace=True, axis=1
+    )
     return td_data[~td_data["Test ID"].isin(genepanels_rcodes)]
