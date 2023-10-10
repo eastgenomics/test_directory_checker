@@ -41,9 +41,7 @@ def check_test_method(row: pd.Series, config: dict) -> pd.Series:
     test_methods_config = config["ngs_test_methods"]
     test_method = [row["Test Method"]]
     diff_potential_new_tm = set(test_method) - set(test_methods_config)
-    diff_potential_removed_tm = set(test_methods_config) - set(test_method)
     row["Potential new test methods"] = diff_potential_new_tm
-    row["Potential removed test methods"] = diff_potential_removed_tm
     return row
 
 
@@ -168,6 +166,9 @@ def compare_gp_td(
             if td_for_r_code.shape[0] == 0:
                 # clinical indication has been removed
                 removed_tests = removed_tests.append(data, ignore_index=True)
+                removed_tests = removed_tests.reindex(
+                    columns=["gemini_name", "panel", "genes"]
+                )
 
             elif td_for_r_code.shape[0] == 1:
                 # check if that new test code replaces the old one by looking
@@ -275,8 +276,4 @@ def find_new_clinical_indications(
 
     # extract the r codes from the genepanels file
     genepanels_rcodes = [ci.split("_")[0] for ci in genepanels_df["ci"].values]
-    td_data.drop(
-        ["Potential new test methods", "Potential removed test methods"],
-        inplace=True, axis=1
-    )
     return td_data[~td_data["Test ID"].isin(genepanels_rcodes)]
