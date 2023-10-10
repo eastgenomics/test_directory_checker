@@ -79,11 +79,6 @@ def load_config(config):
     return data
 
 
-def hgnc_query(hgnc_id, hgnc_dump):
-    row = hgnc_dump.loc[hgnc_dump["HGNC ID"] == hgnc_id]
-    return row
-
-
 def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
     """ Get the HGNC ids from the panels/genes targets
 
@@ -100,8 +95,8 @@ def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
     data = set()
 
     for target in targets:
+        # assume it's a panelapp panel id
         if target.isdigit():
-            # assume it's a panelapp panel id
             # 481 has been merged with 480
             if target == "481":
                 continue
@@ -119,8 +114,25 @@ def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
 
 
 def get_genes_from_td_target(
-    td_data, signedoff_panels, hgnc_dump, gene_locus_type
-):
+    td_data: pd.DateFrame, signedoff_panels: dict, hgnc_dump: pd.DataFrame,
+    gene_locus_type: dict
+) -> tuple:
+    """ Extract the genes from the target columns from the test directory
+    either from a Panelapp panel or gene symbols and get their HGNC ids.
+
+    Args:
+        td_data (pd.DateFrame): Dataframe containing the test directory data
+        signedoff_panels (dict): Dict containing Panelapp IDs as keys and panel
+        objects as values
+        hgnc_dump (pd.DataFrame): Dataframe containing data from the HGNC dump
+        gene_locus_type (dict): Dict containing the outcome of the gene locus
+        type check
+
+    Returns:
+        tuple: Tuple containing the set of genes for the given targets and the
+        gene locus type dict to get updated
+    """
+
     # Check that the content didn't change
     # get list of HGNC ids for test directory and genepanels
     identified_targets = np.concatenate(
@@ -136,7 +148,7 @@ def get_genes_from_td_target(
         identified_targets, signedoff_panels
     ):
         if gene not in gene_locus_type:
-            hgnc_info = hgnc_query(gene, hgnc_dump)
+            hgnc_info = hgnc_dump.loc[hgnc_dump["HGNC ID"] == gene]
 
             # RNA genes and mitochondrial genes are excluded from the
             # genepanels file because we don't have transcripts for
