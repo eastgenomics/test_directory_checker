@@ -3,14 +3,53 @@ import json
 import numpy as np
 import pandas as pd
 from panelapp import queries
+import pytest
 
 from test_directory_checker import checker
 
 
-def test_check_target(hgnc_dump):
-    hgnc_dump = pd.read_csv(hgnc_dump, sep="\t")
-    row = pd.Series(["Thoracic aortic aneurysm or dissection (700)"], index=["Target/Genes"])
-    processed_row = checker.check_target(row, hgnc_dump)
+@pytest.fixture
+def setup_hgnc_dump(hgnc_dump):
+    yield pd.read_csv(hgnc_dump, sep="\t")
+
+
+@pytest.fixture
+def setup_config(config):
+    config = open(config)
+    data = json.load(config)
+    config.close()
+    yield data
+
+
+@pytest.fixture
+def setup_td_data(td_data):
+    yield pd.read_csv(
+        td_data, sep="\t", keep_default_na=False,
+        converters={
+            "Identified panels": lambda x: x.strip("[]").split(", ") if x != "" else [],
+            "Identified genes": lambda x: x.strip("[]").split(", ") if x != "" else [],
+        }
+    )
+
+
+@pytest.fixture
+def setup_genepanels_data(genepanels_data):
+    yield pd.read_csv(
+        genepanels_data, sep="\t", names=["ci", "panel", "gene"]
+    )
+
+
+@pytest.fixture
+def setup_signedoff_panels():
+    yield queries.get_all_signedoff_panels()
+
+
+def test_check_target_panel(setup_hgnc_dump):
+    row = pd.Series(
+        ["Thoracic aortic aneurysm or dissection (700)"],
+        index=["Target/Genes"]
+    )
+    processed_row = checker.check_target(row, setup_hgnc_dump)
     expected_row = pd.Series(
         [
             "Thoracic aortic aneurysm or dissection (700)",
@@ -23,47 +62,57 @@ def test_check_target(hgnc_dump):
     np.testing.assert_array_equal(processed_row, expected_row)
 
 
-def test_check_test_method(config):
-    config = open(config)
-    data = json.load(config)
-    config.close()
-
-    row = pd.Series(["Small panel"], index=["Test Method"])
-    processed_row = checker.check_test_method(row, data)
+def test_check_target_gene(setup_hgnc_dump):
+    row = pd.Series(
+        ["BMPR2"],
+        index=["Target/Genes"]
+    )
+    processed_row = checker.check_target(row, setup_hgnc_dump)
     expected_row = pd.Series(
         [
-            "Small panel", set(), {
-                "WES or Medium panel", "Medium panel",
-                "Single gene testing (<10 amplicons)", "WES or Medium Panel",
-                "Single gene sequencing <=10 amplicons", "small panel",
-                "WES or Large penel", "WGS", "WES", "WES or Large panel",
-                "Single gene sequencing >=10 amplicons", "WES or Large Panel",
-                "Single gene sequencing <10 amplicons", "WES or Small Panel"
-            }
+            "BMPR2",
+            [],
+            ["HGNC:1078"]
+        ],
+        index=["Target/Genes", "Identified panels", "Identified genes"]
+    )
+
+    np.testing.assert_array_equal(processed_row, expected_row)
+
+
+def test_check_test_method_exists(setup_config):
+    row = pd.Series(["Small panel"], index=["Test Method"])
+    processed_row = checker.check_test_method(row, setup_config)
+    expected_row = pd.Series(
+        [
+            "Small panel", set()
         ], index=[
-            "Test Method", "Potential new test methods",
-            "Potential removed test methods"
+            "Test Method", "Potential new test methods"
         ]
     )
 
     np.testing.assert_array_equal(processed_row, expected_row)
 
 
-def test_compare_gp_td(td_data, genepanels_data, hgnc_dump):
-    td_data = pd.read_csv(
-        td_data, sep="\t", keep_default_na=False,
-        converters={
-            "Identified panels": lambda x: x.strip("[]").split(", ") if x != "" else [],
-            "Identified genes": lambda x: x.strip("[]").split(", ") if x != "" else [],
-        }
+def test_check_test_method_not_exists(setup_config):
+    row = pd.Series(["New test method"], index=["Test Method"])
+    processed_row = checker.check_test_method(row, setup_config)
+    expected_row = pd.Series(
+        [
+            "New test method", {"New test method"}
+        ], index=[
+            "Test Method", "Potential new test methods",
+        ]
     )
-    genepanels_data = pd.read_csv(
-        genepanels_data, sep="\t", names=["ci", "panel", "gene"]
-    )
-    hgnc_dump = pd.read_csv(hgnc_dump, sep="\t")
-    signedoff_panels = queries.get_all_signedoff_panels()
 
-    expected_identical_cis = pd.DataFrame(
+    np.testing.assert_array_equal(processed_row, expected_row)
+
+
+def test_compare_gp_td(
+    setup_td_data, setup_genepanels_data, setup_hgnc_dump,
+    setup_signedoff_panels
+):
+    expected_identical_tests = pd.DataFrame(
         [
             [
                 "R130.1_Short QT syndrome_P", "Short QT syndrome_3.1",
@@ -110,7 +159,19 @@ def test_compare_gp_td(td_data, genepanels_data, hgnc_dump):
         ]
     )
 
-    expected_replaced_cis = pd.DataFrame(
+    expected_removed_tests = pd.DataFrame(
+        [
+            [
+                "R1000.1_Removed test", "Removed test panel",
+                "HGNC:1390, HGNC:6251, HGNC:6263, HGNC:6294"
+            ]
+        ],
+        columns=[
+            "gemini_name", "panel", "genes"
+        ]
+    )
+
+    expected_replaced_tests = pd.DataFrame(
         [
             [
                 "R100.1_Test clinical indication", "Test panel_1.0",
@@ -143,54 +204,59 @@ def test_compare_gp_td(td_data, genepanels_data, hgnc_dump):
         ]
     )
 
-    identical_cis, replaced_cis = checker.compare_gp_td(
-        td_data, genepanels_data, hgnc_dump, signedoff_panels
+    identical_tests, removed_tests, replaced_tests = checker.compare_gp_td(
+        setup_td_data, setup_genepanels_data, setup_hgnc_dump,
+        setup_signedoff_panels
     )
 
-    for col in identical_cis.columns:
+    for col in identical_tests.columns:
         np.testing.assert_array_equal(
-            identical_cis[col].values, expected_identical_cis[col].values
+            identical_tests[col].values, expected_identical_tests[col].values
         )
 
-    for col in replaced_cis.columns:
+    for col in removed_tests.columns:
         np.testing.assert_array_equal(
-            replaced_cis[col].values, expected_replaced_cis[col].values
+            removed_tests[col].values, expected_removed_tests[col].values
+        )
+
+    for col in replaced_tests.columns:
+        np.testing.assert_array_equal(
+            replaced_tests[col].values, expected_replaced_tests[col].values
         )
 
 
-def test_find_new_clinical_indications(td_data, genepanels_data):
-    td_data = pd.read_csv(
-        td_data, sep="\t", keep_default_na=False,
-        converters={
-            "Identified panels": lambda x: x.strip("[]").split(", ") if x != "" else [],
-            "Identified genes": lambda x: x.strip("[]").split(", ") if x != "" else [],
-        }
-    )
-    genepanels_df = pd.read_csv(
-        genepanels_data, sep="\t", names=["ci", "panel", "gene"]
-    )
-
+def test_find_new_clinical_indications(setup_td_data, setup_genepanels_data):
     expected_new_cis = pd.DataFrame(
         [
             [
-                "R100.2", "Test panel", "525", ""
+                "R100.2", "Test clinical indication", "Test panel", ["525"],
+                [], "Small panel", "set()"
             ],
             [
-                "R134.2", "Familial hypercholesterolaemia", "772", ""
+                "R134.2", "Familial hypercholesterolaemia",
+                "Familial hypercholesterolaemia", ["772"], [],
+                "Small panel", "set()"
             ],
             [
-                "R134.3", "Familial hypercholesterolaemia", "", "HGNC:1228"
+                "R134.3", "Familial hypercholesterolaemia",
+                "Familial hypercholesterolaemia", [], ["HGNC:1228"],
+                "Single gene sequencing <=10 amplicons", "set()"
             ],
             [
-                "R500.1", "Test new panel", "100", ""
+                "R500.1", "Test new ci", "Test new panel", ["100"],	[],
+                "Small panel", "set()"
             ],
         ],
         columns=[
-            "td_ci", "td_target", "identified_panels", "identified_genes"
+            "Test ID", "Clinical Indication", "Target/Genes",
+            "Identified panels", "Identified genes", "Test Method",
+            "Potential new test methods"
         ]
     )
 
-    new_cis = checker.find_new_clinical_indications(td_data, genepanels_df)
+    new_cis = checker.find_new_clinical_indications(
+        setup_td_data, setup_genepanels_data
+    )
 
     for col in new_cis.columns:
         np.testing.assert_array_equal(
