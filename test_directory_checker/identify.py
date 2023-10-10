@@ -20,7 +20,7 @@ def identify_target(target: str, hgnc_dump: pd.DataFrame) -> list:
     genes = []
 
     potential_panel_targets = regex.findall(r"\([0-9&\ ]+\)", target)
-    potential_gene_targets = regex.findall(r"[A-Z]+[A-Z0-9]+", target)
+    potential_gene_targets = regex.findall(r"[A-Z]+[A-Z0-9\-]+", target)
 
     # regex to identify panelapp panels
     if potential_panel_targets:
@@ -30,7 +30,7 @@ def identify_target(target: str, hgnc_dump: pd.DataFrame) -> list:
             panels.append(cleaned_panelapp_id)
 
     # regex to identify gene symbol
-    if potential_gene_targets:
+    elif potential_gene_targets:
         for potential_gene in potential_gene_targets:
             hgnc_id_data = find_hgnc_id(potential_gene, hgnc_dump)
 
