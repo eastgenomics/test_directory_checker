@@ -114,7 +114,7 @@ def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
 
 
 def get_genes_from_td_target(
-    td_data: pd.DateFrame, signedoff_panels: dict, hgnc_dump: pd.DataFrame,
+    td_data: pd.DataFrame, signedoff_panels: dict, hgnc_dump: pd.DataFrame,
     gene_locus_type: dict
 ) -> tuple:
     """ Extract the genes from the target columns from the test directory
