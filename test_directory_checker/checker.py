@@ -82,6 +82,8 @@ def compare_gp_td(
         ]
     )
 
+    removed_tests = pd.DataFrame([], columns=["gemini_name", "panel", "genes"])
+
     replaced_tests = pd.DataFrame(
         [],
         columns=[
@@ -166,7 +168,7 @@ def compare_gp_td(
 
             if td_for_r_code.shape[0] == 0:
                 # clinical indication has been removed
-                continue
+                removed_tests = removed_tests.append(data, ignore_index=True)
 
             elif td_for_r_code.shape[0] == 1:
                 # check if that new test code replaces the old one by looking
@@ -254,7 +256,7 @@ def compare_gp_td(
         ]
     )
 
-    return identical_tests, replaced_tests
+    return identical_tests, removed_tests, replaced_tests
 
 
 def find_new_clinical_indications(
