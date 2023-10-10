@@ -274,42 +274,6 @@ def find_new_clinical_indications(
         directory
     """
 
-    new_cis = pd.DataFrame(
-        [],
-        columns=[
-            "td_ci", "td_target", "identified_panels", "identified_genes"
-        ]
-    )
-
-    for test_code in td_data["Test ID"].unique():
-        data = {
-            "td_ci": None, "td_target": None, "identified_panels": None,
-            "identified_genes": None
-        }
-        td_for_test_id = td_data[td_data["Test ID"] == test_code]
-        genepanels_data = genepanels_df[
-            genepanels_df["ci"].str.contains(test_code)
-        ]
-
-        if genepanels_data.shape[0] == 0:
-            data["td_ci"] = ", ".join(
-                td_for_test_id["Test ID"].to_numpy()
-            )
-            data["td_target"] = ", ".join(
-                td_for_test_id["Target/Genes"].to_numpy()
-            )
-            data["identified_panels"] = ", ".join(
-                [
-                    panel
-                    for panel in td_for_test_id["Identified panels"].to_numpy()[0]
-                ]
-            )
-            data["identified_genes"] = ", ".join(
-                [
-                    gene
-                    for gene in td_for_test_id["Identified genes"].to_numpy()[0]
-                ]
-            )
-            new_cis = new_cis.append(data, ignore_index=True)
-
-    return new_cis
+    # extract the r codes from the genepanels file
+    genepanels_rcodes = [ci.split("_")[0] for ci in genepanels_df["ci"].values]
+    return td_data[~td_data["Test ID"].isin(genepanels_rcodes)]
