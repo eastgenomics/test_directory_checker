@@ -25,7 +25,7 @@ The version from the website might not be the latest one.
 
 From https://www.genenames.org/download/custom/, check the boxes as shown in the screenshot below.
 
-![Alt text](image.png)
+![Alt text](images_readme/image.png)
 
 ### Find the test directory config
 
@@ -47,7 +47,7 @@ It outputs an HTML representation of the dataframe containing the identified gen
 
 Output: `targets.html`
 
-![Alt text](image-1.png)
+![Alt text](images_readme/image-1.png)
 
 ### Check the test methods
 
@@ -56,7 +56,7 @@ It outputs an HTML representation of the dataframe containing the comparison of 
 
 Output: `test_methods.html`
 
-![Alt text](image-2.png)
+![Alt text](images_readme/image-2.png)
 
 ### Compare genepanels and test directory
 
@@ -64,7 +64,7 @@ Using the test directory and a genepanels file, the code compares the content of
 
 Output: `identical_tests.html` + `removed_tests.html` + `replaced_tests.html`
 
-![Alt text](image-3.png)
+![Alt text](images_readme/image-3.png)
 
 ### Find new clinical indications
 
@@ -72,7 +72,7 @@ The code will go through every test in the test directory and it will attempt to
 
 Output: `new_cis.html`
 
-![Alt text](image-4.png)
+![Alt text](images_readme/image-4.png)
 
 ## Unittesting
 
