@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 from panelapp import queries
 
@@ -45,12 +46,15 @@ def main(args):
     for df in [target_data, test_method_data]:
         df.sort_values(["Test Method", "Test ID"], inplace=True)
 
-    identical_tests.to_html("identical_tests.html")
-    removed_tests.to_html("removed_tests.html")
-    replaced_tests.to_html("replaced_tests.html")
-    target_data.to_html("targets.html")
-    test_method_data.to_html("test_methods.html")
-    new_cis.to_html("new_cis.html")
+    out_folder = Path(args["output"])
+    out_folder.mkdir(exist_ok=True)
+
+    identical_tests.to_html(f"{out_folder}/identical_tests.html")
+    removed_tests.to_html(f"{out_folder}/removed_tests.html")
+    replaced_tests.to_html(f"{out_folder}/replaced_tests.html")
+    target_data.to_html(f"{out_folder}/targets.html")
+    test_method_data.to_html(f"{out_folder}/test_methods.html")
+    new_cis.to_html(f"{out_folder}/new_cis.html")
 
 
 if __name__ == "__main__":
@@ -72,6 +76,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-c", "--config", help="Test directory parser config file"
+    )
+    parser.add_argument(
+        "-o", "--output", help="Output folder", default="td_checker_output"
     )
     args = vars(parser.parse_args())
     main(args)
