@@ -50,7 +50,7 @@ def check_test_method(row: pd.Series, config: dict) -> pd.Series:
 
 def compare_gp_td(
     td_data: pd.DataFrame, genepanels_data: pd.DataFrame,
-    hgnc_dump: pd.DataFrame, signedoff_panels: dict 
+    hgnc_dump: pd.DataFrame, signedoff_panels: dict
 ) -> tuple:
     """ Compare the test directory data and the genepanels data.
     The code will look for test IDs and will compare the content resulting in 3
