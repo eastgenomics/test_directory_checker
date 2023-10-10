@@ -62,7 +62,7 @@ Output: `test_methods.html`
 
 Using the test directory and a genepanels file, the code compares the content of each clinical indication in the genepanels file and finds the corresponding test code or clinical indication code to find if the genepanels clinical indication contains the genepanels ci.
 
-Output: `ci_existing_in_both.html` + `potential_replaced_ci.html`
+Output: `identical_tests.html` + `removed_tests.html` + `replaced_tests.html`
 
 ![Alt text](image-3.png)
 
