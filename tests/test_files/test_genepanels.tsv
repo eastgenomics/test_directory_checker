@@ -3,8 +3,10 @@ R130.1_Short QT syndrome_P	Short QT syndrome_3.1	HGNC:6251
 R130.1_Short QT syndrome_P	Short QT syndrome_3.1	HGNC:6263
 R130.1_Short QT syndrome_P	Short QT syndrome_3.1	HGNC:6294
 R341.1_Hereditary angioedema types I and II_G	HGNC:1228_SG_panel_1.0.0	HGNC:1228
-R344.1_Primary hyperaldosteronism - KCNJ5_G	HGNC:6266_SG_panel_1.0.0	HGNC:6266
-R345.2_Facioscapulohumeral muscular dystrophy - extended testing_G	HGNC:29090_SG_panel_1.0.0	HGNC:29090
+R122.1_Factor XIII deficiency_P	HGNC:3531_SG_panel_1.0.0	HGNC:3531
+R122.1_Factor XIII deficiency_P	HGNC:3534_SG_panel_1.0.0	HGNC:3534
+R143.1_Neonatal diabetes_P	HGNC:59_SG_panel_1.0.0	HGNC:59
+R143.1_Neonatal diabetes_P	HGNC:6257_SG_panel_1.0.0	HGNC:6257
 R347.1_Inherited predisposition to acute myeloid leukaemia (AML)_P	Inherited predisposition to acute myeloid leukaemia (AML)_3.0	HGNC:10471
 R347.1_Inherited predisposition to acute myeloid leukaemia (AML)_P	Inherited predisposition to acute myeloid leukaemia (AML)_3.0	HGNC:11730
 R347.1_Inherited predisposition to acute myeloid leukaemia (AML)_P	Inherited predisposition to acute myeloid leukaemia (AML)_3.0	HGNC:11998
@@ -30,3 +32,7 @@ R134.1_Familial hypercholesterolaemia_P	Familial hypercholesterolaemia (GMS)_2.0
 R134.1_Familial hypercholesterolaemia_P	Familial hypercholesterolaemia (GMS)_2.0	HGNC:603
 R134.1_Familial hypercholesterolaemia_P	Familial hypercholesterolaemia (GMS)_2.0	HGNC:613
 R134.1_Familial hypercholesterolaemia_P	Familial hypercholesterolaemia (GMS)_2.0	HGNC:6547
+R1000.1_Removed test	Removed test panel	HGNC:1390
+R1000.1_Removed test	Removed test panel	HGNC:6251
+R1000.1_Removed test	Removed test panel	HGNC:6263
+R1000.1_Removed test	Removed test panel	HGNC:6294
