@@ -34,7 +34,7 @@ def main(args):
         ]
     )
 
-    identical_ci, replaced_ci = checker.compare_gp_td(
+    identical_tests, removed_tests, replaced_tests = checker.compare_gp_td(
         target_data, genepanels_data, hgnc_data, signedoff_panels
     )
 
@@ -42,8 +42,9 @@ def main(args):
         target_data, genepanels_data
     )
 
-    identical_ci.to_html("ci_existing_in_both.html")
-    replaced_ci.to_html("potential_replaced_ci.html")
+    identical_tests.to_html("identical_tests.html")
+    removed_tests.to_html("removed_tests.html")
+    replaced_tests.to_html("replaced_tests.html")
     target_data.to_html("targets.html")
     test_method_data.to_html("test_methods.html")
     new_cis.to_html("new_cis.html")
