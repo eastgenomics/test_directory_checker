@@ -42,6 +42,9 @@ def main(args):
         target_data, genepanels_data
     )
 
+    for df in [new_cis, target_data, test_method_data]:
+        df.sort_values(["Test Method", "Test ID"], inplace=True)
+
     identical_tests.to_html("identical_tests.html")
     removed_tests.to_html("removed_tests.html")
     replaced_tests.to_html("replaced_tests.html")
