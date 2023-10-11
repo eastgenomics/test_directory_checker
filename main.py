@@ -43,7 +43,7 @@ def main(args):
         target_data, genepanels_data
     )
 
-    for df in [target_data, test_method_data]:
+    for df in [new_cis, target_data, test_method_data]:
         df.sort_values(["Test Method", "Test ID"], inplace=True)
 
     out_folder = Path(args["output"])
