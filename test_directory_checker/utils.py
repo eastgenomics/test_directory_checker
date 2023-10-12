@@ -167,3 +167,29 @@ def get_genes_from_td_target(
                 td_genes.add(gene)
 
     return td_genes, gene_locus_type
+
+
+def filter_df(df: pd.DataFrame, **filter_elements) -> pd.DataFrame:
+    """ Filter a dataframe using a dict of data
+
+    Args:
+        df (pd.DataFrame): Dataframe to be filtered
+        **filter_elements: Kwargs elements to filter with
+
+    Returns:
+        pd.DataFrame: Filtered dataframe
+    """
+
+    intermediate_data = []
+
+    for key, value in filter_elements.items():
+        if value is None:
+            df_to_add = df[~df[key].isna()]
+        else:
+            df_to_add = df[df[key] != value]
+
+        intermediate_data.append(df_to_add)
+
+    filtered_data = pd.concat(intermediate_data)
+
+    return filtered_data
