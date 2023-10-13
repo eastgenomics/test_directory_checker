@@ -169,8 +169,8 @@ def get_genes_from_td_target(
     return td_genes, gene_locus_type
 
 
-def filter_df(df: pd.DataFrame, **filter_elements) -> pd.DataFrame:
-    """ Filter a dataframe using a dict of data
+def filter_out_df(df: pd.DataFrame, **filter_elements) -> pd.DataFrame:
+    """ Filter out rows matching values in a dataframe using a dict of data
 
     Args:
         df (pd.DataFrame): Dataframe to be filtered
