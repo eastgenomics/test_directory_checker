@@ -6,7 +6,7 @@ import pandas as pd
 ROOT_DIR = Path(__file__).absolute().parents[0]
 
 
-def output_plot(
+def output_table(
     full_table: pd.DataFrame, output_name: str, output_folder: Path,
     *filtered_tables
 ):
