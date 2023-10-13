@@ -3,7 +3,7 @@ from pathlib import Path
 
 from panelapp import queries
 
-from test_directory_checker import checker, utils
+from test_directory_checker import checker, utils, output
 
 
 def main(args):
@@ -46,15 +46,43 @@ def main(args):
     for df in [new_cis, target_data, test_method_data]:
         df.sort_values(["Test Method", "Test ID"], inplace=True)
 
-    out_folder = Path(args["output"])
-    out_folder.mkdir(exist_ok=True)
+    output_folder = Path(args["output"])
 
-    identical_tests.to_html(f"{out_folder}/identical_tests.html")
-    removed_tests.to_html(f"{out_folder}/removed_tests.html")
-    replaced_tests.to_html(f"{out_folder}/replaced_tests.html")
-    target_data.to_html(f"{out_folder}/targets.html")
-    test_method_data.to_html(f"{out_folder}/test_methods.html")
-    new_cis.to_html(f"{out_folder}/new_cis.html")
+    filtered_df = utils.filter_out_df(identical_tests, removed=None, added=None)
+    output.output_table(
+        identical_tests, "identical_tests.html", output_folder, filtered_df
+    )
+
+    output.output_table(removed_tests, "removed_tests.html", output_folder)
+
+    filtered_df = utils.filter_out_df(replaced_tests, removed=None, added=None)
+    output.output_table(
+        replaced_tests, "replaced_tests.html", output_folder, filtered_df
+    )
+
+    filtered_df = target_data.loc[
+        (
+            target_data["Identified panels"].str.len() == 0
+        ) &
+        (
+            target_data["Identified genes"].str.len() == 0
+        )
+    ]
+    output.output_table(
+        target_data, "targets.html", output_folder, filtered_df
+    )
+
+    filtered_df = utils.filter_out_df(
+        test_method_data, **{"Potential new test methods": set()}
+    )
+    output.output_table(
+        test_method_data, "test_methods.html", output_folder, filtered_df
+    )
+
+    filtered_df = new_cis[
+        new_cis["Test Method"].isin(td_config["ngs_test_methods"])
+    ]
+    output.output_table(new_cis, "new_cis.html", output_folder, filtered_df)
 
 
 if __name__ == "__main__":
