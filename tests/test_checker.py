@@ -1,11 +1,12 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from panelapp import queries
 import pytest
 
-from test_directory_checker import checker
+from test_directory_checker import checker, output, utils
 
 
 @pytest.fixture
@@ -262,6 +263,18 @@ def test_compare_gp_td(
         np.testing.assert_array_equal(
             replaced_tests[col].values, expected_replaced_tests[col].values
         )
+
+    # not part of the actual test but to provide examples in the readme
+    # screenshots
+    output.output_table(
+        removed_tests, "removed_tests.html", Path("tests/test_outputs")
+    )
+
+    filtered_df = utils.filter_out_df(replaced_tests, removed=None, added=None)
+    output.output_table(
+        replaced_tests, "replaced_tests.html", Path("tests/test_outputs"),
+        filtered_df
+    )
 
 
 def test_find_new_clinical_indications(setup_td_data, setup_genepanels_data):
