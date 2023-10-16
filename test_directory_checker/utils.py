@@ -196,6 +196,6 @@ def filter_out_df(df: pd.DataFrame, **filter_elements) -> pd.DataFrame:
 
         intermediate_data.append(df_to_add)
 
-    filtered_data = pd.concat(intermediate_data)
+    filtered_data = pd.concat(intermediate_data).drop_duplicates()
 
     return filtered_data
