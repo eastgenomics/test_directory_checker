@@ -266,6 +266,14 @@ def test_compare_gp_td(
 
     # not part of the actual test but to provide examples in the readme
     # screenshots
+    filtered_df = utils.filter_out_df(
+        identical_tests, removed=None, added=None
+    )
+    output.output_table(
+        identical_tests, "identical_tests.html", Path("tests/test_outputs"),
+        filtered_df
+    )
+
     output.output_table(
         removed_tests, "removed_tests.html", Path("tests/test_outputs")
     )
