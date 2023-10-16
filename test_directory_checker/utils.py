@@ -150,6 +150,12 @@ def get_genes_from_td_target(
         if gene not in gene_locus_type:
             hgnc_info = hgnc_dump.loc[hgnc_dump["HGNC ID"] == gene]
 
+            # if the gene is TRAC or IGHM, genes that we don't have transcripts
+            # for, removed them for the genes for the content comparison
+            if gene in ["HGNC:12029", "HGNC:5541"]:
+                gene_locus_type[gene] = False
+                continue
+
             # RNA genes and mitochondrial genes are excluded from the
             # genepanels file because we don't have transcripts for
             # them
