@@ -239,8 +239,8 @@ def test_compare_gp_td(
             ]
         ],
         columns=[
-            "gemini_name", "panel", "genes", "td_ci", "td_target", "td_version",
-            "td_genes", "removed", "added"
+            "gemini_name", "panel", "genes", "td_ci", "td_target",
+            "td_version", "td_genes", "removed", "added"
         ]
     )
 
