@@ -73,23 +73,9 @@ def compare_gp_td(
         and the results of the content comparison.
     """
 
-    identical_tests = pd.DataFrame(
-        [],
-        columns=[
-            "gemini_name", "panel", "genes", "td_ci", "td_target", "td_version",
-            "td_genes", "removed", "added"
-        ]
-    )
-
-    removed_tests = pd.DataFrame([], columns=["gemini_name", "panel", "genes"])
-
-    replaced_tests = pd.DataFrame(
-        [],
-        columns=[
-            "gemini_name", "panel", "genes", "td_ci", "td_target", "td_genes",
-            "removed", "added"
-        ]
-    )
+    identical_tests_data = []
+    removed_tests_data = []
+    replaced_tests_data = []
 
     # this dict will contain genes and whether this gene is captured by our
     # analysis downstream due to its locus type i.e. RNA or mitochondrial
@@ -156,7 +142,7 @@ def compare_gp_td(
             if new_genes:
                 data["added"] = ", ".join(sorted(list(new_genes)))
 
-            identical_tests = identical_tests.append(data, ignore_index=True)
+            identical_tests_data.append(data)
 
         else:
             # didn't find the test ID, use clinical indication ID to find
@@ -167,10 +153,7 @@ def compare_gp_td(
 
             if td_for_r_code.shape[0] == 0:
                 # clinical indication has been removed
-                removed_tests = removed_tests.append(data, ignore_index=True)
-                removed_tests = removed_tests.reindex(
-                    columns=["gemini_name", "panel", "genes"]
-                )
+                removed_tests_data.append(data)
 
             elif td_for_r_code.shape[0] == 1:
                 # check if that new test code replaces the old one by looking
@@ -203,7 +186,7 @@ def compare_gp_td(
                 if new_genes:
                     data["added"] = ", ".join(sorted(list(new_genes)))
 
-                replaced_tests = replaced_tests.append(data, ignore_index=True)
+                replaced_tests_data.append(data)
 
             elif td_for_r_code.shape[0] >= 2:
                 # loop through those tests and check if one of them replaces
@@ -218,9 +201,7 @@ def compare_gp_td(
                         **gene_locus_type, **gene_locus_type_update
                     }
 
-                    data["td_ci"] = ", ".join(
-                        df["Test ID"].to_numpy()
-                    )
+                    data["td_ci"] = ", ".join(df["Test ID"].to_numpy())
                     data["td_target"] = ", ".join(
                         df["Target/Genes"].to_numpy()
                     )
@@ -235,30 +216,40 @@ def compare_gp_td(
                     new_genes = td_genes - genepanels_genes
 
                     if removed_genes:
-                        data["removed"] = ", ".join(sorted(list(removed_genes)))
+                        data["removed"] = ", ".join(
+                            sorted(list(removed_genes))
+                        )
 
                     if new_genes:
                         data["added"] = ", ".join(sorted(list(new_genes)))
 
-                    replaced_tests = replaced_tests.append(
-                        data, ignore_index=True
-                    )
+                    # weird thing happened where assigning the new td_ci in the
+                    # data dict caused it to change it in the list of dicts
+                    # so using copy to add to the list of dicts
+                    copy_data = data.copy()
+                    replaced_tests_data.append(copy_data)
 
-    identical_tests = identical_tests.reindex(
+    identical_tests_df = pd.DataFrame(
+        identical_tests_data,
         columns=[
             "gemini_name", "panel", "genes", "td_ci", "td_target",
             "td_version", "td_genes", "removed", "added"
         ]
     )
 
-    replaced_tests = replaced_tests.reindex(
+    removed_tests_df = pd.DataFrame(
+        removed_tests_data, columns=["gemini_name", "panel", "genes"]
+    )
+
+    replaced_tests_df = pd.DataFrame(
+        replaced_tests_data,
         columns=[
             "gemini_name", "panel", "genes", "td_ci", "td_target",
             "td_version", "td_genes", "removed", "added"
         ]
     )
 
-    return identical_tests, removed_tests, replaced_tests
+    return identical_tests_df, removed_tests_df, replaced_tests_df
 
 
 def find_new_clinical_indications(
