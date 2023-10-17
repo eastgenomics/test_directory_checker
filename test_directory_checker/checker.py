@@ -41,7 +41,9 @@ def check_test_method(row: pd.Series, config: dict) -> pd.Series:
     test_methods_config = config["ngs_test_methods"]
     test_method = [row["Test Method"]]
     diff_potential_new_tm = set(test_method) - set(test_methods_config)
-    row["Potential new test methods"] = diff_potential_new_tm
+    row["Potential new test methods"] = ", ".join(
+        sorted(list(diff_potential_new_tm))
+    )
     return row
 
 
