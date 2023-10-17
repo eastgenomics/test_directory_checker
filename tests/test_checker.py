@@ -106,7 +106,7 @@ def test_check_test_method_exists(setup_config):
     processed_row = checker.check_test_method(row, setup_config)
     expected_row = pd.Series(
         [
-            "Small panel", set()
+            "Small panel", ""
         ], index=[
             "Test Method", "Potential new test methods"
         ]
@@ -126,7 +126,7 @@ def test_check_test_method_not_exists(setup_config):
     processed_row = checker.check_test_method(row, setup_config)
     expected_row = pd.Series(
         [
-            "New test method", {"New test method"}
+            "New test method", "New test method"
         ], index=[
             "Test Method", "Potential new test methods",
         ]
