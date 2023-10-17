@@ -73,7 +73,7 @@ def main(args):
     )
 
     filtered_df = utils.filter_out_df(
-        test_method_data, **{"Potential new test methods": set()}
+        test_method_data, **{"Potential new test methods": ""}
     )
     output.output_table(
         test_method_data, "test_methods.html", output_folder, filtered_df
