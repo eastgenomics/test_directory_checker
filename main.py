@@ -35,7 +35,9 @@ def main(args):
         ]
     )
 
-    identical_tests, removed_tests, replaced_tests = checker.compare_gp_td(
+    (
+        all_tests, identical_tests, removed_tests, replaced_tests
+    ) = checker.compare_gp_td(
         target_data, genepanels_data, hgnc_data, signedoff_panels
     )
 
@@ -46,20 +48,32 @@ def main(args):
     for df in [new_cis, target_data, test_method_data]:
         df.sort_values(["Test Method", "Test ID"], inplace=True)
 
+    presence_db_df = checker.check_if_genes_present_in_db(
+        args["db_user"], args["db_password"], args["db_name"], "mysql"
+        all_tests["td_genes"]
+    )
+
+    # outputting logic
     output_folder = Path(args["output"])
 
-    filtered_df = utils.filter_out_df(identical_tests, removed=None, added=None)
+    # filter tests have None in both the removed and added columns
+    filtered_df = utils.filter_out_df(
+        identical_tests, removed=None, added=None
+    )
     output.output_table(
         identical_tests, "identical_tests.html", output_folder, filtered_df
     )
 
     output.output_table(removed_tests, "removed_tests.html", output_folder)
 
+    # filter out tests have None in both the removed and added columns
     filtered_df = utils.filter_out_df(replaced_tests, removed=None, added=None)
     output.output_table(
         replaced_tests, "replaced_tests.html", output_folder, filtered_df
     )
 
+    # filter out tests that have empty lists in the Identified panels and
+    # Identified genes
     filtered_df = target_data.loc[
         (
             target_data["Identified panels"].str.len() == 0
@@ -72,6 +86,8 @@ def main(args):
         target_data, "targets.html", output_folder, filtered_df
     )
 
+    # filter out tests that have an empty string in the Potential new test
+    # methods column
     filtered_df = utils.filter_out_df(
         test_method_data, **{"Potential new test methods": ""}
     )
@@ -79,17 +95,34 @@ def main(args):
         test_method_data, "test_methods.html", output_folder, filtered_df
     )
 
+    # filter using tests that are present in the test methods in the passed
+    # config file
     filtered_df = new_cis[
         new_cis["Test Method"].isin(td_config["ngs_test_methods"])
     ]
     output.output_table(new_cis, "new_cis.html", output_folder, filtered_df)
+
+    # filter to get tests that have False in the presence_in_db or
+    # has_clinical_transcript columns
+    filtered_df = presence_db_df[
+        (
+            ~presence_db_df["presence_in_db"]
+        ) |
+        (
+            ~presence_db_df["has_clinical_transcript"]
+        )
+    ]
+    output.output_table(
+        presence_db_df, "presence_in_db.html", output_folder, filtered_df
+    )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
             "Checks the content of the rare disease sheet of the test "
-            "directory"
+            "directory, more information in "
+            "https://github.com/eastgenomics/test_directory_checker"
         )
     )
     parser.add_argument(
@@ -102,6 +135,13 @@ if __name__ == "__main__":
         "genepanels",
         help="Genepanels file to compare against the provided test directory"
     )
+
+    parser.add_argument("db_user", help="Username of the database to check")
+    parser.add_argument(
+        "db_password", help="Username's password of the database to check"
+    )
+    parser.add_argument("db_name", help="Name of the database to check")
+
     parser.add_argument(
         "-c", "--config", help="Test directory parser config file"
     )
