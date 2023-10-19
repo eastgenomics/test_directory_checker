@@ -244,24 +244,86 @@ def test_compare_gp_td(
         ]
     )
 
-    identical_tests, removed_tests, replaced_tests = checker.compare_gp_td(
+    expected_all_tests = pd.DataFrame(
+        [
+            [
+                "R100.2",
+                "Test panel",
+                "HGNC:10471, HGNC:11730, HGNC:11998, HGNC:1349, HGNC:1833, HGNC:18674, HGNC:29186, HGNC:3495, HGNC:4171, HGNC:6919",
+            ],
+            [
+                "R122.1",
+                "F13A1, F13B, F2",
+                "HGNC:3531, HGNC:3534, HGNC:3535",
+            ],
+            [
+                "R130.1",
+                "Short QT syndrome (224)",
+                "HGNC:1390, HGNC:6251, HGNC:6263, HGNC:6294",
+            ],
+            [
+                "R134.2",
+                "Familial hypercholesterolaemia",
+                "HGNC:18640, HGNC:20001, HGNC:603, HGNC:613, HGNC:6547",
+            ],
+            [
+                "R134.3",
+                "Familial hypercholesterolaemia",
+                "HGNC:1228",
+            ],
+            [
+                "R143.1",
+                "ABCC8",
+                "HGNC:59"
+            ],
+            [
+                "R341.1",
+                "SERPING1",
+                "HGNC:1228"
+            ],
+            [
+                "R347.1",
+                "Inherited predisposition to acute myeloid leukaemia (AML) (525)",
+                "HGNC:10471, HGNC:11730, HGNC:11998, HGNC:1349, HGNC:1833, HGNC:18674, HGNC:29186, HGNC:3495, HGNC:4171, HGNC:6919",
+            ],
+            [
+                None, None, None
+            ]
+        ],
+        columns=[
+            "td_ci", "td_target", "td_genes"
+        ]
+    )
+
+    (
+        identical_tests, removed_tests, replaced_tests, all_tests
+    ) = checker.compare_gp_td(
         setup_td_data, setup_genepanels_data, setup_hgnc_dump,
         setup_signedoff_panels
     )
 
     for col in identical_tests.columns:
         np.testing.assert_array_equal(
-            identical_tests[col].values, expected_identical_tests[col].values
+            identical_tests[col].to_numpy(),
+            expected_identical_tests[col].to_numpy()
         )
 
     for col in removed_tests.columns:
         np.testing.assert_array_equal(
-            removed_tests[col].values, expected_removed_tests[col].values
+            removed_tests[col].to_numpy(),
+            expected_removed_tests[col].to_numpy()
         )
 
     for col in replaced_tests.columns:
         np.testing.assert_array_equal(
-            replaced_tests[col].values, expected_replaced_tests[col].values
+            replaced_tests[col].to_numpy(),
+            expected_replaced_tests[col].to_numpy()
+        )
+
+    for col in all_tests.columns:
+        np.testing.assert_array_equal(
+            all_tests[col].to_numpy(),
+            expected_all_tests[col].to_numpy()
         )
 
     # not part of the actual test but to provide examples in the readme
@@ -314,6 +376,11 @@ def test_find_new_clinical_indications(setup_td_data, setup_genepanels_data):
                 "R500.1", "Test new ci", "Test new panel", ["100"],	[],
                 "Small panel", "set()"
             ],
+            [
+                "R666.1", "Test new genes", "Test new genes", [],
+                ["HGNC:483858"], "Single gene sequenceing <=10 amplicons",
+                "set()"
+            ]
         ],
         columns=[
             "Test ID", "Clinical Indication", "Target/Genes",
@@ -330,3 +397,19 @@ def test_find_new_clinical_indications(setup_td_data, setup_genepanels_data):
         np.testing.assert_array_equal(
             new_cis[col].values, expected_new_cis[col].values
         )
+
+
+def test_check_if_genes_in_db(
+    setup_td_data, setup_genepanels_data, setup_hgnc_dump,
+    setup_signedoff_panels
+):
+    (
+        identical_tests, removed_tests, replaced_tests, all_tests
+    ) = checker.compare_gp_td(
+        setup_td_data, setup_genepanels_data, setup_hgnc_dump,
+        setup_signedoff_panels
+    )
+
+    presence_in_db_df = checker.check_if_genes_present_in_db(
+        "", "", "tests/test_files/test_db.db", "sqlite", all_tests["td_genes"]
+    )
