@@ -1,4 +1,7 @@
 import pandas as pd
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.schema import MetaData
 
 from test_directory_checker import utils, identify
 
@@ -76,6 +79,7 @@ def compare_gp_td(
     identical_tests_data = []
     removed_tests_data = []
     replaced_tests_data = []
+    all_tests = set()
 
     # this dict will contain genes and whether this gene is captured by our
     # analysis downstream due to its locus type i.e. RNA or mitochondrial
@@ -142,7 +146,8 @@ def compare_gp_td(
             if new_genes:
                 data["added"] = ", ".join(sorted(list(new_genes)))
 
-            identical_tests_data.append(data)
+            copy_data = data.copy()
+            identical_tests_data.append(copy_data)
 
         else:
             # didn't find the test ID, use clinical indication ID to find
@@ -153,7 +158,8 @@ def compare_gp_td(
 
             if td_for_r_code.shape[0] == 0:
                 # clinical indication has been removed
-                removed_tests_data.append(data)
+                copy_data = data.copy()
+                removed_tests_data.append(copy_data)
 
             elif td_for_r_code.shape[0] == 1:
                 # check if that new test code replaces the old one by looking
@@ -186,7 +192,8 @@ def compare_gp_td(
                 if new_genes:
                     data["added"] = ", ".join(sorted(list(new_genes)))
 
-                replaced_tests_data.append(data)
+                copy_data = data.copy()
+                replaced_tests_data.append(copy_data)
 
             elif td_for_r_code.shape[0] >= 2:
                 # loop through those tests and check if one of them replaces
@@ -228,6 +235,15 @@ def compare_gp_td(
                     # so using copy to add to the list of dicts
                     copy_data = data.copy()
                     replaced_tests_data.append(copy_data)
+                    all_tests.add(tuple(copy_data.items()))
+
+        copy_data = data.copy()
+        all_tests.add(tuple(copy_data.items()))
+
+    all_tests_df = pd.DataFrame(
+        [dict(test) for test in all_tests],
+        columns=["td_ci", "td_target", "td_genes"]
+    ).sort_values("td_ci")
 
     identical_tests_df = pd.DataFrame(
         identical_tests_data,
@@ -249,7 +265,9 @@ def compare_gp_td(
         ]
     )
 
-    return identical_tests_df, removed_tests_df, replaced_tests_df
+    return (
+        identical_tests_df, removed_tests_df, replaced_tests_df, all_tests_df
+    )
 
 
 def find_new_clinical_indications(
@@ -270,3 +288,76 @@ def find_new_clinical_indications(
     # extract the r codes from the genepanels file
     genepanels_rcodes = [ci.split("_")[0] for ci in genepanels_df["ci"].values]
     return td_data[~td_data["Test ID"].isin(genepanels_rcodes)]
+
+
+def check_if_genes_present_in_db(
+    username: str, pwd: str, db: str, db_type: str, genes: pd.Series
+):
+    """ Check if the genes in a Series are present in a given database as well
+    as checking if a gene is in the database if it does have a clinical
+    transcript
+
+    Args:
+        username (str): Username to the database
+        pwd (str): Corresponding password to the username
+        db (str): Database name
+        db_type (str): Database type, either MySQL or SQLite
+        genes (pd.Series): Series containing the gene data
+
+    Raises:
+        e: _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    try:
+        if db_type == "mysql":
+            db = create_engine(f"mysql://{username}:{pwd}@localhost/{db}")
+
+        elif db_type == "sqlite":
+            db = create_engine(f"sqlite://{db}")
+
+    except Exception as e:
+        raise e
+    else:
+        meta = MetaData()
+        meta.reflect(bind=db)
+        Session = sessionmaker(bind=db)
+        session = Session()
+
+    gene_tb = meta.tables["gene"]
+    g2t_tb = meta.tables["genes2transcripts"]
+
+    flatten_list_of_genes = set(
+        [gene for sublist in genes.to_numpy() for gene in sublist.split(", ")]
+    )
+
+    data = []
+
+    for gene in flatten_list_of_genes:
+        # query the database using the HGNC id and join the gene and g2t tables
+        query = session.query(gene_tb.c.hgnc_id, g2t_tb.c.clinical_transcript)\
+            .join(g2t_tb)\
+            .filter(gene_tb.c.hgnc_id == gene).all()
+
+        has_clinical_tx = False
+        presence_in_db = False
+
+        if query:
+            presence_in_db = True
+
+            # for every hgnc id/transcript couple, check if the clinical
+            # transcript status == 1
+            # i.e. the transcript is the clinical transcript
+            for hgnc_id, clinical_transcript in query:
+                if clinical_transcript == 1:
+                    has_clinical_tx = True
+
+        data.append([gene, presence_in_db, has_clinical_tx])
+
+    df = pd.DataFrame(
+        data, columns=["gene", "presence_in_db", "has_clinical_transcript"]
+    )
+
+    return df
