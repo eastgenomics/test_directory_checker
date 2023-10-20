@@ -114,8 +114,7 @@ def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
 
 
 def get_genes_from_td_target(
-    td_data: pd.DataFrame, signedoff_panels: dict, hgnc_dump: pd.DataFrame,
-    gene_locus_type: dict
+    td_data: pd.DataFrame, signedoff_panels: dict, gene_locus_type: dict
 ) -> tuple:
     """ Extract the genes from the target columns from the test directory
     either from a Panelapp panel or gene symbols and get their HGNC ids.
@@ -124,7 +123,6 @@ def get_genes_from_td_target(
         td_data (pd.DateFrame): Dataframe containing the test directory data
         signedoff_panels (dict): Dict containing Panelapp IDs as keys and panel
         objects as values
-        hgnc_dump (pd.DataFrame): Dataframe containing data from the HGNC dump
         gene_locus_type (dict): Dict containing the outcome of the gene locus
         type check
 
@@ -147,32 +145,11 @@ def get_genes_from_td_target(
     for gene in get_all_hgnc_ids_in_target(
         identified_targets, signedoff_panels
     ):
-        if gene not in gene_locus_type:
-            hgnc_info = hgnc_dump.loc[hgnc_dump["HGNC ID"] == gene]
-
-            # if the gene is TRAC or IGHM, genes that we don't have transcripts
-            # for, removed them for the genes for the content comparison
-            if gene in ["HGNC:12029", "HGNC:5541"]:
-                gene_locus_type[gene] = False
-                continue
-
-            # RNA genes and mitochondrial genes are excluded from the
-            # genepanels file because we don't have transcripts for
-            # them
-            if (
-                "RNA" in hgnc_info["Locus group"].to_numpy()[0] or
-                hgnc_info["Chromosome"].to_numpy()[0] == "mitochondria"
-            ):
-                gene_locus_type[gene] = False
-            else:
-                gene_locus_type[gene] = True
-                td_genes.add(gene)
-
-        else:
+        if gene in gene_locus_type:
             if gene_locus_type[gene]:
                 td_genes.add(gene)
 
-    return td_genes, gene_locus_type
+    return td_genes
 
 
 def filter_out_df(df: pd.DataFrame, **filter_elements) -> pd.DataFrame:
@@ -199,3 +176,63 @@ def filter_out_df(df: pd.DataFrame, **filter_elements) -> pd.DataFrame:
     filtered_data = pd.concat(intermediate_data).drop_duplicates()
 
     return filtered_data
+
+
+def get_locus_status_genes(target_data, signedoff_panels, hgnc_dump):
+    """ Extract the genes from the target columns from the test directory
+    either from a Panelapp panel or gene symbols and get their HGNC ids.
+
+    Args:
+        td_data (pd.DateFrame): Dataframe containing the test directory data
+        signedoff_panels (dict): Dict containing Panelapp IDs as keys and panel
+        objects as values
+        hgnc_dump (pd.DataFrame): Dataframe containing data from the HGNC dump
+
+    Returns:
+        tuple: Tuple containing the set of genes for the given targets and the
+        gene locus type dict to get updated
+    """
+
+    # Check that the content didn't change
+    # get list of HGNC ids for test directory and genepanels
+    identified_targets = np.concatenate(
+        (
+            [
+                target
+                for sublist in target_data["Identified panels"].to_numpy()
+                for target in sublist
+            ],
+            [
+                target
+                for sublist in target_data["Identified genes"].to_numpy()
+                for target in sublist
+            ],
+        ), axis=None
+    )
+
+    gene_locus_type = {}
+
+    for gene in get_all_hgnc_ids_in_target(
+        identified_targets, signedoff_panels
+    ):
+        if gene not in gene_locus_type:
+            hgnc_info = hgnc_dump.loc[hgnc_dump["HGNC ID"] == gene]
+
+            # if the gene is TRAC or IGHM, genes that we don't have transcripts
+            # for, removed them for the genes for the content comparison
+            if gene in ["HGNC:12029", "HGNC:5541"]:
+                gene_locus_type[gene] = False
+                continue
+
+            # RNA genes and mitochondrial genes are excluded from the
+            # genepanels file because we don't have transcripts for
+            # them
+            if (
+                "RNA" in hgnc_info["Locus group"].to_numpy()[0] or
+                hgnc_info["Chromosome"].to_numpy()[0] == "mitochondria"
+            ):
+                gene_locus_type[gene] = False
+            else:
+                gene_locus_type[gene] = True
+
+    return gene_locus_type
