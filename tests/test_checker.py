@@ -349,6 +349,16 @@ def test_find_new_clinical_indications(setup_td_data, setup_genepanels_data):
 def test_check_if_genes_in_db(
     setup_td_data, setup_hgnc_dump, setup_signedoff_panels
 ):
+    """Test to check if a gene is present in a database + if that gene has a
+    clinical transcript
+
+    Args:
+        setup_td_data (function): Fixture that parses the test directory data
+        setup_hgnc_dump (function): Fixture that parses the hgnc dump
+        setup_signedoff_panels (function): Fixture that creates the signedoff
+        panel dictionary
+    """
+
     gene_locus_type = utils.get_locus_status_genes(
         setup_td_data, setup_signedoff_panels, setup_hgnc_dump
     )
@@ -397,3 +407,18 @@ def test_check_if_genes_in_db(
             presence_in_db_df[col].to_numpy(),
             expected_presence_genes[col].to_numpy()
         )
+
+    # filter to get tests that have False in the presence_in_db or
+    # has_clinical_transcript columns
+    filtered_df = presence_in_db_df[
+        (
+            ~presence_in_db_df["presence_in_db"]
+        ) |
+        (
+            ~presence_in_db_df["has_clinical_transcript"]
+        )
+    ]
+    output.output_table(
+        presence_in_db_df, "presence_in_db.html", Path("tests/test_outputs"),
+        filtered_df
+    )
