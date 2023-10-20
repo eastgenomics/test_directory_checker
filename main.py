@@ -28,6 +28,10 @@ def main(args):
         ]
     )
 
+    gene_locus_type = utils.get_locus_status_genes(
+        target_data, signedoff_panels, hgnc_data
+    )
+
     test_method_data = test_method_data.reindex(
         columns=[
             "Test ID", "Clinical Indication", "Test Method",
@@ -36,9 +40,9 @@ def main(args):
     )
 
     (
-        all_tests, identical_tests, removed_tests, replaced_tests
+        identical_tests, removed_tests, replaced_tests
     ) = checker.compare_gp_td(
-        target_data, genepanels_data, hgnc_data, signedoff_panels
+        target_data, genepanels_data, hgnc_data, signedoff_panels, gene_locus_type
     )
 
     new_cis = checker.find_new_clinical_indications(
@@ -48,9 +52,13 @@ def main(args):
     for df in [new_cis, target_data, test_method_data]:
         df.sort_values(["Test Method", "Test ID"], inplace=True)
 
+    genes_to_check = utils.get_genes_from_td_target(
+        target_data, signedoff_panels, gene_locus_type
+    )
+
     presence_db_df = checker.check_if_genes_present_in_db(
-        args["db_user"], args["db_password"], args["db_name"], "mysql"
-        all_tests["td_genes"]
+        args["db_user"], args["db_password"], args["db_name"], "mysql",
+        genes_to_check
     )
 
     # outputting logic
