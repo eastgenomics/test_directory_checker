@@ -135,8 +135,16 @@ def get_genes_from_td_target(
     # get list of HGNC ids for test directory and genepanels
     identified_targets = np.concatenate(
         (
-            td_data["Identified panels"].to_numpy()[0],
-            td_data["Identified genes"].to_numpy()[0]
+            [
+                target
+                for sublist in td_data["Identified panels"].to_numpy()
+                for target in sublist
+            ],
+            [
+                target
+                for sublist in td_data["Identified genes"].to_numpy()
+                for target in sublist
+            ],
         ), axis=None
     )
 
