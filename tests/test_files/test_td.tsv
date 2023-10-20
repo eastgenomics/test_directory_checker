@@ -1,11 +1,10 @@
 Test ID	Clinical Indication	Target/Genes	Identified panels	Identified genes	Test Method	Potential new test methods
 R130.1	Short QT syndrome	Short QT syndrome (224)	[224]		Small panel	set()
 R341.1	Hereditary angioedema types I and II	SERPING1		[HGNC:1228]	Single gene sequencing >=10 amplicons	set()
-R122.1	Factor XIII deficiency	F13A1, F13B, F2		[HGNC:3531, HGNC:3534, HGNC:3535]	Single gene sequencing >=10 amplicons	set()
+R122.1	Factor XIII deficiency	F13A1, F13B, F2		[HGNC:3531, HGNC:3534, HGNC:6666]	Single gene sequencing >=10 amplicons	set()
 R143.1	Neonatal diabetes	ABCC8		[HGNC:59]	Single gene sequencing >=10 amplicons	set()
 R347.1	Inherited predisposition to acute myeloid leukaemia (AML)	Inherited predisposition to acute myeloid leukaemia (AML) (525)	[525]		Small panel	set()
 R100.2	Test clinical indication	Test panel	[525]		Small panel	set()
 R134.2	Familial hypercholesterolaemia	Familial hypercholesterolaemia	[772]		Small panel	set()
 R134.3	Familial hypercholesterolaemia	Familial hypercholesterolaemia		[HGNC:1228]	Single gene sequencing <=10 amplicons	set()
-R500.1	Test new ci	Test new panel	[100]		Small panel	set()
-R666.1	Test new genes	Test new genes		[HGNC:483858]	Single gene sequenceing <=10 amplicons	set()
+R500.1	Test new ci	Test new panel	[525]		Small panel	set()
