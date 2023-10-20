@@ -333,6 +333,8 @@ def check_if_genes_present_in_db(
 
         data.append([gene, presence_in_db, has_clinical_tx])
 
+    data = sorted(data, key=lambda x: x[0])
+
     df = pd.DataFrame(
         data, columns=["gene", "presence_in_db", "has_clinical_transcript"]
     )
