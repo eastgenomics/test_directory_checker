@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -52,7 +54,7 @@ def check_test_method(row: pd.Series, config: dict) -> pd.Series:
 
 def compare_gp_td(
     td_data: pd.DataFrame, genepanels_data: pd.DataFrame,
-    hgnc_dump: pd.DataFrame, signedoff_panels: dict
+    signedoff_panels: dict, gene_locus_type
 ) -> tuple:
     """ Compare the test directory data and the genepanels data.
     The code will look for test IDs and will compare the content resulting in 3
@@ -79,12 +81,6 @@ def compare_gp_td(
     identical_tests_data = []
     removed_tests_data = []
     replaced_tests_data = []
-    all_tests = set()
-
-    # this dict will contain genes and whether this gene is captured by our
-    # analysis downstream due to its locus type i.e. RNA or mitochondrial
-    # it is used to automatically skip those RNA and mitochondrial genes.
-    gene_locus_type = {}
 
     # go through every test ID in the genepanels file
     for gemini_name in genepanels_data["ci"].unique():
@@ -118,11 +114,9 @@ def compare_gp_td(
 
         if td_for_test_id.shape[0] == 1:
             # found test id in test directory
-            td_genes, gene_locus_type_update = utils.get_genes_from_td_target(
-                td_for_test_id, signedoff_panels, hgnc_dump, gene_locus_type
+            td_genes = utils.get_genes_from_td_target(
+                td_for_test_id, signedoff_panels, gene_locus_type
             )
-
-            gene_locus_type = {**gene_locus_type, **gene_locus_type_update}
 
             data["td_ci"] = ", ".join(
                 td_for_test_id["Test ID"].to_numpy()
@@ -164,11 +158,9 @@ def compare_gp_td(
             elif td_for_r_code.shape[0] == 1:
                 # check if that new test code replaces the old one by looking
                 # at the gene content
-                td_genes, gene_locus_type_update = utils.get_genes_from_td_target(
-                    td_for_r_code, signedoff_panels, hgnc_dump, gene_locus_type
+                td_genes = utils.get_genes_from_td_target(
+                    td_for_r_code, signedoff_panels, gene_locus_type
                 )
-
-                gene_locus_type = {**gene_locus_type, **gene_locus_type_update}
 
                 data["td_ci"] = ", ".join(
                     td_for_r_code["Test ID"].to_numpy()
@@ -201,12 +193,9 @@ def compare_gp_td(
                 for i, row in td_for_r_code.iterrows():
                     df = row.to_frame().T
 
-                    td_genes, gene_locus_type_update = utils.get_genes_from_td_target(
-                        df, signedoff_panels, hgnc_dump, gene_locus_type
+                    td_genes = utils.get_genes_from_td_target(
+                        df, signedoff_panels, gene_locus_type
                     )
-                    gene_locus_type = {
-                        **gene_locus_type, **gene_locus_type_update
-                    }
 
                     data["td_ci"] = ", ".join(df["Test ID"].to_numpy())
                     data["td_target"] = ", ".join(
@@ -235,15 +224,6 @@ def compare_gp_td(
                     # so using copy to add to the list of dicts
                     copy_data = data.copy()
                     replaced_tests_data.append(copy_data)
-                    all_tests.add(tuple(copy_data.items()))
-
-        copy_data = data.copy()
-        all_tests.add(tuple(copy_data.items()))
-
-    all_tests_df = pd.DataFrame(
-        [dict(test) for test in all_tests],
-        columns=["td_ci", "td_target", "td_genes"]
-    ).sort_values("td_ci")
 
     identical_tests_df = pd.DataFrame(
         identical_tests_data,
@@ -266,7 +246,7 @@ def compare_gp_td(
     )
 
     return (
-        identical_tests_df, removed_tests_df, replaced_tests_df, all_tests_df
+        identical_tests_df, removed_tests_df, replaced_tests_df
     )
 
 
@@ -291,7 +271,7 @@ def find_new_clinical_indications(
 
 
 def check_if_genes_present_in_db(
-    username: str, pwd: str, db: str, db_type: str, genes: pd.Series
+    username: str, pwd: str, db: str, db_type: str, genes: set
 ):
     """ Check if the genes in a Series are present in a given database as well
     as checking if a gene is in the database if it does have a clinical
@@ -302,7 +282,7 @@ def check_if_genes_present_in_db(
         pwd (str): Corresponding password to the username
         db (str): Database name
         db_type (str): Database type, either MySQL or SQLite
-        genes (pd.Series): Series containing the gene data
+        genes (set): Set containing the gene data
 
     Raises:
         e: _description_
@@ -316,7 +296,8 @@ def check_if_genes_present_in_db(
             db = create_engine(f"mysql://{username}:{pwd}@localhost/{db}")
 
         elif db_type == "sqlite":
-            db = create_engine(f"sqlite://{db}")
+            assert Path(f"{db}").exists(), f"'{db}' doesn't exist"
+            db = create_engine(f"sqlite:///{db}")
 
     except Exception as e:
         raise e
@@ -329,13 +310,9 @@ def check_if_genes_present_in_db(
     gene_tb = meta.tables["gene"]
     g2t_tb = meta.tables["genes2transcripts"]
 
-    flatten_list_of_genes = set(
-        [gene for sublist in genes.to_numpy() for gene in sublist.split(", ")]
-    )
-
     data = []
 
-    for gene in flatten_list_of_genes:
+    for gene in genes:
         # query the database using the HGNC id and join the gene and g2t tables
         query = session.query(gene_tb.c.hgnc_id, g2t_tb.c.clinical_transcript)\
             .join(g2t_tb)\
