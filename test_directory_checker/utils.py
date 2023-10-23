@@ -5,6 +5,11 @@ import numpy as np
 import pandas as pd
 
 
+# Some Panelapp IDs are not accessible through the Panelapp API either because
+# they have been removed or because the panel is in development
+UNACCESSIBLE_PANELAPP_IDS = ["481", "1218"]
+
+
 def parse_td(test_directory, config):
     """Parse rare disease test directory using the config file
 
@@ -79,9 +84,7 @@ def load_config(config):
     return data
 
 
-def get_all_hgnc_ids_in_target(
-    targets: Iterable, signedoff_panels: dict, unaccessible_ids: list
-):
+def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
     """ Get the HGNC ids from the panels/genes targets
 
     Args:
@@ -89,8 +92,6 @@ def get_all_hgnc_ids_in_target(
         from
         signedoff_panels (dict): Dict containing the panelapp ids and the
         corresponding Panelapp panel objects
-        unaccessible_ids (list): List of Panelapp IDs that are not accessible
-        through the API
 
     Returns:
         set: Set of genes for all the targets
@@ -103,7 +104,7 @@ def get_all_hgnc_ids_in_target(
         if target.isdigit():
             # some panelapp ids are not accessible through the API because they
             # have been retired or they are in development
-            if target in unaccessible_ids:
+            if target in UNACCESSIBLE_PANELAPP_IDS:
                 continue
 
             panel = signedoff_panels[int(target)]
