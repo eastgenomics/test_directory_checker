@@ -98,7 +98,8 @@ def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
         # assume it's a panelapp panel id
         if target.isdigit():
             # 481 has been merged with 480
-            if target == "481":
+            # 1218 is a development panel and is not accessible via the API
+            if target == "481" or target == "1218":
                 continue
 
             panel = signedoff_panels[int(target)]
