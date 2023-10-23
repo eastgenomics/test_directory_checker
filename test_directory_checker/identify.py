@@ -8,7 +8,7 @@ def identify_target(target: str, hgnc_dump: pd.DataFrame) -> list:
     """ Identify the target as gene or panel using regex
 
     Args:
-        target (str): String for the target
+        target (str): String for the target extracted from the test directory
         hgnc_dump (pd.DataFrame): Pandas Dataframe containing the HGNC data
 
     Returns:
