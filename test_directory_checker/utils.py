@@ -79,7 +79,9 @@ def load_config(config):
     return data
 
 
-def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
+def get_all_hgnc_ids_in_target(
+    targets: Iterable, signedoff_panels: dict, unaccessible_ids: list
+):
     """ Get the HGNC ids from the panels/genes targets
 
     Args:
@@ -87,6 +89,8 @@ def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
         from
         signedoff_panels (dict): Dict containing the panelapp ids and the
         corresponding Panelapp panel objects
+        unaccessible_ids (list): List of Panelapp IDs that are not accessible
+        through the API
 
     Returns:
         set: Set of genes for all the targets
@@ -97,9 +101,9 @@ def get_all_hgnc_ids_in_target(targets: Iterable, signedoff_panels: dict):
     for target in targets:
         # assume it's a panelapp panel id
         if target.isdigit():
-            # 481 has been merged with 480
-            # 1218 is a development panel and is not accessible via the API
-            if target == "481" or target == "1218":
+            # some panelapp ids are not accessible through the API because they
+            # have been retired or they are in development
+            if target in unaccessible_ids:
                 continue
 
             panel = signedoff_panels[int(target)]
