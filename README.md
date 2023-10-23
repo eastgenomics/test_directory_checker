@@ -88,6 +88,16 @@ Output: `new_cis.html`
 
 ![Alt text](images_readme/image2.png)
 
+### Check if the genes are in the database
+
+The code will get the identified panels and genes and will look for the genes in a given database (tailored for Panel Palace right now). The output will be a dataframe containing every gene and whether a gene is present in the database and if it has a clinical transcript.
+
+The filtered table contains the genes with a False value in the `presence in db` or `has clinical transcript`.
+
+Output: `presence_in_db.html`
+
+![Alt text](images_readme/image7.png)
+
 ## Unittesting
 
 The unit tests check the functions of the `checker.py` file. These are the main functions used to check the content of the test directory.
