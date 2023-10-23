@@ -163,7 +163,8 @@ if __name__ == "__main__":
     parser.add_argument("db_name", help="Name of the database to check")
 
     parser.add_argument(
-        "-c", "--config", help="Test directory parser config file"
+        "-c", "--config", help="Test directory parser config file",
+        required=True
     )
     parser.add_argument(
         "-o", "--output", help="Output folder", default="td_checker_output"
