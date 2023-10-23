@@ -207,7 +207,6 @@ def get_locus_status_genes(target_data, signedoff_panels, hgnc_dump):
         gene locus type dict to get updated
     """
 
-    # Check that the content didn't change
     # get list of HGNC ids for test directory and genepanels
     identified_targets = np.concatenate(
         (
