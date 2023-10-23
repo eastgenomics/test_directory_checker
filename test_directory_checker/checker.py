@@ -54,7 +54,7 @@ def check_test_method(row: pd.Series, config: dict) -> pd.Series:
 
 def compare_gp_td(
     td_data: pd.DataFrame, genepanels_data: pd.DataFrame,
-    signedoff_panels: dict, gene_locus_type
+    signedoff_panels: dict, gene_locus_type: dict
 ) -> tuple:
     """ Compare the test directory data and the genepanels data.
     The code will look for test IDs and will compare the content resulting in 3
@@ -68,10 +68,11 @@ def compare_gp_td(
     Args:
         td_data (pd.DataFrame): Dataframe with the test directory data
         genepanels_data (pd.DataFrame): Dataframe with the genepanels data
-        hgnc_dump (pd.DataFrame): Dataframe with the HGNC data
         signedoff_panels (dict): Dict containing the signedoff panels from
         Panelapp with the key being the Panelapp ID and the value being a Panel
         object
+        gene_locus_type (dict): Dict containing the genes and whether we
+        capture them according to their locus type
 
     Returns:
         tuple: Tuple of 2 elements containing the identical/replaced test IDs
