@@ -54,7 +54,7 @@ def check_test_method(row: pd.Series, config: dict) -> pd.Series:
 
 def compare_gp_td(
     td_data: pd.DataFrame, genepanels_data: pd.DataFrame,
-    signedoff_panels: dict, gene_locus_type: dict
+    signedoff_panels: dict, gene_locus_type: dict, blacklist_config: dict
 ) -> tuple:
     """ Compare the test directory data and the genepanels data.
     The code will look for test IDs and will compare the content resulting in 3
@@ -73,6 +73,7 @@ def compare_gp_td(
         object
         gene_locus_type (dict): Dict containing the genes and whether we
         capture them according to their locus type
+        blacklist_config (dict): Dict containing blacklisted panel IDs or genes
 
     Returns:
         tuple: Tuple of 2 elements containing the identical/replaced test IDs
@@ -115,34 +116,13 @@ def compare_gp_td(
 
         if td_for_test_id.shape[0] == 1:
             # found test id in test directory
-            td_genes = utils.get_genes_from_td_target(
-                td_for_test_id, signedoff_panels, gene_locus_type
+            data_for_test_id = utils.format_td_data(
+                td_for_test_id, genepanels_genes, signedoff_panels,
+                gene_locus_type, blacklist_config
             )
 
-            data["td_ci"] = ", ".join(
-                td_for_test_id["Test ID"].to_numpy()
-            )
-            data["td_target"] = ", ".join(
-                td_for_test_id["Target/Genes"].to_numpy()
-            )
-            data["td_version"] = ", ".join([
-                signedoff_panels[int(target)].get_version()
-                for target in td_for_test_id["Identified panels"].to_numpy()[0]
-                if target != "481"
-            ])
-            data["td_genes"] = ", ".join(sorted(list(td_genes)))
-
-            removed_genes = genepanels_genes - td_genes
-            new_genes = td_genes - genepanels_genes
-
-            if removed_genes:
-                data["removed"] = ", ".join(sorted(list(removed_genes)))
-
-            if new_genes:
-                data["added"] = ", ".join(sorted(list(new_genes)))
-
-            copy_data = data.copy()
-            identical_tests_data.append(copy_data)
+            data = {**data, **data_for_test_id}
+            identical_tests_data.append(data)
 
         else:
             # didn't find the test ID, use clinical indication ID to find
@@ -159,72 +139,30 @@ def compare_gp_td(
             elif td_for_r_code.shape[0] == 1:
                 # check if that new test code replaces the old one by looking
                 # at the gene content
-                td_genes = utils.get_genes_from_td_target(
-                    td_for_r_code, signedoff_panels, gene_locus_type
+                data_for_r_code = utils.format_td_data(
+                    td_for_r_code, genepanels_genes, signedoff_panels,
+                    gene_locus_type, blacklist_config
                 )
 
-                data["td_ci"] = ", ".join(
-                    td_for_r_code["Test ID"].to_numpy()
-                )
-                data["td_target"] = ", ".join(
-                    td_for_r_code["Target/Genes"].to_numpy()
-                )
-                data["td_version"] = ", ".join([
-                    signedoff_panels[int(target)].get_version()
-                    for target in td_for_r_code["Identified panels"].to_numpy()[0]
-                    if target != "481"
-                ])
-                data["td_genes"] = ", ".join(sorted(list(td_genes)))
-
-                removed_genes = genepanels_genes - td_genes
-                new_genes = td_genes - genepanels_genes
-
-                if removed_genes:
-                    data["removed"] = ", ".join(sorted(list(removed_genes)))
-
-                if new_genes:
-                    data["added"] = ", ".join(sorted(list(new_genes)))
-
-                copy_data = data.copy()
-                replaced_tests_data.append(copy_data)
+                data = {**data, **data_for_r_code}
+                replaced_tests_data.append(data)
 
             elif td_for_r_code.shape[0] >= 2:
                 # loop through those tests and check if one of them replaces
                 # the old one
                 for i, row in td_for_r_code.iterrows():
-                    df = row.to_frame().T
+                    retain_data = data
 
-                    td_genes = utils.get_genes_from_td_target(
-                        df, signedoff_panels, gene_locus_type
+                    # transpose the dataframe so that indexes becomes columns
+                    df_for_row = row.to_frame().T
+
+                    data_for_row = utils.format_td_data(
+                        df_for_row, genepanels_genes, signedoff_panels,
+                        gene_locus_type, blacklist_config
                     )
 
-                    data["td_ci"] = ", ".join(df["Test ID"].to_numpy())
-                    data["td_target"] = ", ".join(
-                        df["Target/Genes"].to_numpy()
-                    )
-                    data["td_version"] = ", ".join([
-                        signedoff_panels[int(target)].get_version()
-                        for target in df["Identified panels"].to_numpy()[0]
-                        if target != "481"
-                    ])
-                    data["td_genes"] = ", ".join(sorted(list(td_genes)))
-
-                    removed_genes = genepanels_genes - td_genes
-                    new_genes = td_genes - genepanels_genes
-
-                    if removed_genes:
-                        data["removed"] = ", ".join(
-                            sorted(list(removed_genes))
-                        )
-
-                    if new_genes:
-                        data["added"] = ", ".join(sorted(list(new_genes)))
-
-                    # weird thing happened where assigning the new td_ci in the
-                    # data dict caused it to change it in the list of dicts
-                    # so using copy to add to the list of dicts
-                    copy_data = data.copy()
-                    replaced_tests_data.append(copy_data)
+                    retain_data = {**retain_data, **data_for_row}
+                    replaced_tests_data.append(retain_data)
 
     identical_tests_df = pd.DataFrame(
         identical_tests_data,
