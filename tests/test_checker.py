@@ -104,7 +104,8 @@ def test_check_target_gene(setup_hgnc_dump):
 
 
 def test_check_test_method_exists(setup_config):
-    """ Test that finds an existing test method
+    """ Test that finds an existing test method --> should return a new column
+    with an empty string
 
     Args:
         setup_config (function): Fixture that loads a JSON config file
@@ -124,7 +125,8 @@ def test_check_test_method_exists(setup_config):
 
 
 def test_check_test_method_not_exists(setup_config):
-    """ Test that finds a new test method
+    """ Test that finds a new test method --> should return a new column with
+    the name of the new test method
 
     Args:
         setup_config (function): Fixture that loads a JSON config file
@@ -358,7 +360,10 @@ def test_check_if_genes_in_db(
     setup_td_data, setup_hgnc_dump, setup_signedoff_panels, setup_blacklist
 ):
     """Test to check if a gene is present in a database + if that gene has a
-    clinical transcript
+    clinical transcript.
+    It should return a 3 column dataframe with the gene, and 2 True/False
+    columns depending on whether that gene is present in the database and if it
+    is whether it has a clinical transcript
 
     Args:
         setup_td_data (function): Fixture that parses the test directory data
