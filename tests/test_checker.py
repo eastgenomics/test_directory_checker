@@ -23,6 +23,14 @@ def setup_config(config):
 
 
 @pytest.fixture
+def setup_blacklist(blacklist_config):
+    config = open(blacklist_config)
+    data = json.load(config)
+    config.close()
+    yield data
+
+
+@pytest.fixture
 def setup_td_data(td_data):
     yield pd.read_csv(
         td_data, sep="\t", keep_default_na=False,
@@ -137,7 +145,7 @@ def test_check_test_method_not_exists(setup_config):
 
 def test_compare_gp_td(
     setup_td_data, setup_genepanels_data, setup_hgnc_dump,
-    setup_signedoff_panels
+    setup_signedoff_panels, setup_blacklist
 ):
     """ Test to check the output of the compare_gp_td function. 3 manually
     written dataframes check the 3 outputs of the function
@@ -151,7 +159,7 @@ def test_compare_gp_td(
     """
 
     gene_locus_type = utils.get_locus_status_genes(
-        setup_td_data, setup_signedoff_panels, setup_hgnc_dump
+        setup_td_data, setup_signedoff_panels, setup_hgnc_dump, setup_blacklist
     )
 
     expected_identical_tests = pd.DataFrame(
@@ -252,7 +260,7 @@ def test_compare_gp_td(
         identical_tests, removed_tests, replaced_tests
     ) = checker.compare_gp_td(
         setup_td_data, setup_genepanels_data, setup_signedoff_panels,
-        gene_locus_type
+        gene_locus_type, setup_blacklist
     )
 
     for col in identical_tests.columns:
@@ -347,7 +355,7 @@ def test_find_new_clinical_indications(setup_td_data, setup_genepanels_data):
 
 
 def test_check_if_genes_in_db(
-    setup_td_data, setup_hgnc_dump, setup_signedoff_panels
+    setup_td_data, setup_hgnc_dump, setup_signedoff_panels, setup_blacklist
 ):
     """Test to check if a gene is present in a database + if that gene has a
     clinical transcript
@@ -360,11 +368,11 @@ def test_check_if_genes_in_db(
     """
 
     gene_locus_type = utils.get_locus_status_genes(
-        setup_td_data, setup_signedoff_panels, setup_hgnc_dump
+        setup_td_data, setup_signedoff_panels, setup_hgnc_dump, setup_blacklist
     )
 
     genes_to_check = utils.get_genes_from_td_target(
-        setup_td_data, setup_signedoff_panels, gene_locus_type
+        setup_td_data, setup_signedoff_panels, gene_locus_type, setup_blacklist
     )
 
     presence_in_db_df = checker.check_if_genes_present_in_db(

@@ -6,6 +6,7 @@ def pytest_addoption(parser):
     parser.addoption("--genepanels")
     parser.addoption("--hgnc_dump")
     parser.addoption("--config")
+    parser.addoption("--blacklist_config")
 
 
 @pytest.fixture
@@ -26,3 +27,8 @@ def hgnc_dump(request):
 @pytest.fixture
 def config(request):
     return request.config.getoption("--config")
+
+
+@pytest.fixture
+def blacklist_config(request):
+    return request.config.getoption("--blacklist_config")
