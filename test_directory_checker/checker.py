@@ -23,13 +23,10 @@ def check_target(
         genes columns
     """
 
-    # stupid weird dash that needs replacing
-    target = test_directory_row["Target/Genes"].replace("–", "-")
-
     (
         test_directory_row["Identified panels"],
         test_directory_row["Identified genes"]
-    ) = identify.identify_target(target, hgnc_dump)
+    ) = identify.identify_target(test_directory_row["Target/Genes"], hgnc_dump)
 
     return test_directory_row
 
