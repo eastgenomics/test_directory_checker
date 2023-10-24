@@ -1,0 +1,12 @@
+{
+    "name": "test_config",
+    "ngs_test_methods": [
+        "Medium panel", "Single gene sequencing <=10 amplicons",
+        "Single gene sequencing <10 amplicons",
+        "Single gene sequencing >=10 amplicons",
+        "Single gene testing (<10 amplicons)", "small panel", "Small panel",
+        "WES or Large panel", "WES or Large Panel", "WES or Medium Panel",
+        "WES or Large penel", "WES or Medium panel", "WES or Small Panel",
+        "WGS", "WES"
+    ]
+}
