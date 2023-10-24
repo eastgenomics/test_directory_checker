@@ -8,11 +8,13 @@ from sqlalchemy.sql.schema import MetaData
 from test_directory_checker import utils, identify
 
 
-def check_target(row: pd.Series, hgnc_dump: pd.DataFrame) -> pd.Series:
-    """ Check target and return the identified panels and genes
+def check_target(
+    test_directory_row: pd.Series, hgnc_dump: pd.DataFrame
+) -> pd.Series:
+    """ Check the target column and return the identified panels and genes
 
     Args:
-        row (pd.Series): Pandas Series from the test directory
+        test_directory_row (pd.Series): Pandas Series from the test directory
         hgnc_dump (pd.DataFrame): Pandas Dataframe containing the data from the
         HGNC dump file
 
@@ -22,18 +24,24 @@ def check_target(row: pd.Series, hgnc_dump: pd.DataFrame) -> pd.Series:
     """
 
     # stupid weird dash that needs replacing
-    target = row["Target/Genes"].replace("–", "-")
-    row["Identified panels"], row["Identified genes"] = identify.identify_target(
-        target, hgnc_dump
-    )
-    return row
+    target = test_directory_row["Target/Genes"].replace("–", "-")
+
+    (
+        test_directory_row["Identified panels"],
+        test_directory_row["Identified genes"]
+    ) = identify.identify_target(target, hgnc_dump)
+
+    return test_directory_row
 
 
-def check_test_method(row: pd.Series, config: dict) -> pd.Series:
-    """ Check the test method from the test directory
+def check_test_method(
+    test_directory_row: pd.Series, config: dict
+) -> pd.Series:
+    """ Check the test method from the test directory by looking at the list of
+    covered test methods in the test directory parser config file
 
     Args:
-        row (pd.Series): Pandas Series from the test directory
+        test_directory_row (pd.Series): Pandas Series from the test directory
         config (dict): Dict containing the data from the config file
 
     Returns:
@@ -44,12 +52,12 @@ def check_test_method(row: pd.Series, config: dict) -> pd.Series:
     # check for new test methods
     # check for typos
     test_methods_config = config["ngs_test_methods"]
-    test_method = [row["Test Method"]]
+    test_method = [test_directory_row["Test Method"]]
     diff_potential_new_tm = set(test_method) - set(test_methods_config)
-    row["Potential new test methods"] = ", ".join(
+    test_directory_row["Potential new test methods"] = ", ".join(
         sorted(list(diff_potential_new_tm))
     )
-    return row
+    return test_directory_row
 
 
 def compare_gp_td(
