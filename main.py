@@ -11,6 +11,7 @@ def main(args):
 
     config = utils.load_config("configs/column_config.json")
     td_config = utils.load_config(args["config"])
+    blacklist_config = utils.load_config("configs/blacklist.json")
     td_data = utils.parse_td(args["test_directory"], config)
     hgnc_data = utils.parse_hgnc_dump(args["hgnc_dump"])
     genepanels_data = utils.parse_genepanels(args["genepanels"])
@@ -42,14 +43,15 @@ def main(args):
 
     # setup the locus status dict
     gene_locus_type = utils.get_locus_status_genes(
-        target_data, signedoff_panels, hgnc_data
+        target_data, signedoff_panels, hgnc_data, blacklist_config
     )
 
     # compare the genepanels data to the test directory data
     (
         identical_tests, removed_tests, replaced_tests
     ) = checker.compare_gp_td(
-        target_data, genepanels_data, signedoff_panels, gene_locus_type
+        target_data, genepanels_data, signedoff_panels, gene_locus_type,
+        blacklist_config
     )
 
     # find the new clinical indications in the test directory
