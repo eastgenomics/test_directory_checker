@@ -30,6 +30,18 @@ def mkdir_output_folder(output_folder: Path):
     return folder_path
 
 
+def log_command_line(output_folder: Path, command_line: str):
+    """ Write a txt file containing the command line used to run the script
+
+    Args:
+        output_folder (Path): Path to the output folder
+        command_line (str): Command line at runtime
+    """
+
+    with open(output_folder / "command_line.txt", "w") as f:
+        f.write(command_line)
+
+
 def output_table(
     full_table: pd.DataFrame, output_name: str, output_folder: Path,
     *filtered_tables
