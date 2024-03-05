@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+import sys
 
 from panelapp import queries
 
@@ -8,6 +9,8 @@ from test_directory_checker import checker, utils, output
 
 def main(args):
     ### setup logic ###
+
+    command_line = " ".join(sys.argv)
 
     config = utils.load_config("configs/column_config.json")
     td_config = utils.load_config(args["config"])
@@ -79,6 +82,7 @@ def main(args):
     output_folder = Path(args["output"])
 
     created_output_folder = output.mkdir_output_folder(output_folder)
+    output.log_command_line(created_output_folder, command_line)
 
     # filter tests have None in both the removed and added columns
     filtered_df = utils.filter_out_df(
