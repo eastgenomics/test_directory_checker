@@ -42,6 +42,29 @@ def log_command_line(output_folder: Path, command_line: str):
         f.write(command_line)
 
 
+def output_test_methods(table: pd.Series, output_name: str, output_folder: Path):
+    """ Output the test methods as a 2 column dataframe which will contain the
+    test methods not present in the config and the associated test IDs
+
+    Args:
+        table (pd.Series): Series containing the test methods and the test IDs associated
+        output_name (str): Output name of the file
+        output_folder (Path): Output folder
+    """
+
+    environment = Environment(loader=FileSystemLoader(
+        ROOT_DIR.joinpath("template")
+    ))
+    template = environment.get_template("table_template.html")
+    content = template.render(
+        filtered_tables=[table.to_frame().to_html()],
+        title=output_name,
+    )
+
+    with open(output_folder / output_name, mode="w", encoding="utf-8") as f:
+        f.write(content)
+
+
 def output_table(
     full_table: pd.DataFrame, output_name: str, output_folder: Path,
     *filtered_tables

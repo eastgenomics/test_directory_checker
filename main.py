@@ -43,6 +43,14 @@ def main(args):
             "Potential new test methods"
         ]
     )
+    # sort test method df to be test method --> test codes
+    reformatted_test_method_data = test_method_data.groupby(
+        "Test Method"
+    )["Test ID"].apply(list)
+    
+    new_test_methods = reformatted_test_method_data[
+        ~reformatted_test_method_data.index.isin(td_config["ngs_test_methods"])
+    ]
 
     # setup the locus status dict
     gene_locus_type = utils.get_locus_status_genes(
@@ -116,19 +124,9 @@ def main(args):
 
     # filter out tests that have an empty string in the Potential new test
     # methods column
-    filtered_df = utils.filter_out_df(
-        test_method_data, **{"Potential new test methods": ""}
+    output.output_test_methods(
+        new_test_methods, "test_methods.html", created_output_folder
     )
-    output.output_table(
-        test_method_data, "test_methods.html", created_output_folder, filtered_df
-    )
-
-    # filter using tests that are present in the test methods in the passed
-    # config file
-    filtered_df = new_cis[
-        new_cis["Test Method"].isin(td_config["ngs_test_methods"])
-    ]
-    output.output_table(new_cis, "new_cis.html", created_output_folder, filtered_df)
 
     # filter to get tests that have False in the presence_in_db or
     # has_clinical_transcript columns
