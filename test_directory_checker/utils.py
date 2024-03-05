@@ -1,5 +1,6 @@
 import datetime
 import json
+from pathlib import Path
 from typing import Iterable
 
 import numpy as np
@@ -16,7 +17,18 @@ def get_date():
     return datetime.datetime.now().strftime("%y%m%d")
 
 
-def check_if_output_folder_exists(output_path, date, counter):
+def check_if_output_folder_exists(output_path: Path, date: str, counter: int):
+    """ Check if the output folder exists
+
+    Args:
+        output_path (Path): Initial folder output
+        date (str): Date as YYMMDD
+        counter (int): Counter to differenciate output folders
+
+    Returns:
+        bool: True if the folder path exists, False if not
+    """
+
     full_path = output_path / f"{date}-{counter}"
 
     if full_path.exists():

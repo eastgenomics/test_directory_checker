@@ -8,10 +8,20 @@ from test_directory_checker.utils import check_if_output_folder_exists, get_date
 ROOT_DIR = Path(__file__).absolute().parents[0]
 
 
-def mkdir_output_folder(output_folder):
+def mkdir_output_folder(output_folder: Path):
+    """ Create the output folder
+
+    Args:
+        output_folder (Path): Path to the output folder
+
+    Returns:
+        Path: Created output folder path
+    """
+
     date = get_date()
     counter = 1
 
+    # add to the counter until the folder path doesn't exist
     while check_if_output_folder_exists(output_folder, date, counter):
         counter += 1 
 
