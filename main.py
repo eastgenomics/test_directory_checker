@@ -65,7 +65,7 @@ def main(args):
 
     # get all the genes to check in the database from the target dataframe
     genes_to_check = utils.get_genes_from_td_target(
-        target_data, signedoff_panels, gene_locus_type
+        target_data, signedoff_panels, gene_locus_type, blacklist_config
     )
 
     # check the presence of genes and clinical transcript in the given database
@@ -78,20 +78,22 @@ def main(args):
 
     output_folder = Path(args["output"])
 
+    created_output_folder = output.mkdir_output_folder(output_folder)
+
     # filter tests have None in both the removed and added columns
     filtered_df = utils.filter_out_df(
         identical_tests, removed=None, added=None
     )
     output.output_table(
-        identical_tests, "identical_tests.html", output_folder, filtered_df
+        identical_tests, "identical_tests.html", created_output_folder, filtered_df
     )
 
-    output.output_table(removed_tests, "removed_tests.html", output_folder)
+    output.output_table(removed_tests, "removed_tests.html", created_output_folder)
 
     # filter out tests have None in both the removed and added columns
     filtered_df = utils.filter_out_df(replaced_tests, removed=None, added=None)
     output.output_table(
-        replaced_tests, "replaced_tests.html", output_folder, filtered_df
+        replaced_tests, "replaced_tests.html", created_output_folder, filtered_df
     )
 
     # filter out tests that have empty lists in the Identified panels and
@@ -105,7 +107,7 @@ def main(args):
         )
     ]
     output.output_table(
-        target_data, "targets.html", output_folder, filtered_df
+        target_data, "targets.html", created_output_folder, filtered_df
     )
 
     # filter out tests that have an empty string in the Potential new test
@@ -114,7 +116,7 @@ def main(args):
         test_method_data, **{"Potential new test methods": ""}
     )
     output.output_table(
-        test_method_data, "test_methods.html", output_folder, filtered_df
+        test_method_data, "test_methods.html", created_output_folder, filtered_df
     )
 
     # filter using tests that are present in the test methods in the passed
@@ -122,7 +124,7 @@ def main(args):
     filtered_df = new_cis[
         new_cis["Test Method"].isin(td_config["ngs_test_methods"])
     ]
-    output.output_table(new_cis, "new_cis.html", output_folder, filtered_df)
+    output.output_table(new_cis, "new_cis.html", created_output_folder, filtered_df)
 
     # filter to get tests that have False in the presence_in_db or
     # has_clinical_transcript columns
@@ -135,7 +137,7 @@ def main(args):
         )
     ]
     output.output_table(
-        presence_db_df, "presence_in_db.html", output_folder, filtered_df
+        presence_db_df, "presence_in_db.html", created_output_folder, filtered_df
     )
 
 
