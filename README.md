@@ -46,11 +46,11 @@ Using the test directory, the code gets the targets and attempts to identify eit
 
 It outputs an HTML representation of the dataframe containing the identified genes/panels.
 
-The filtered table is filtered to remove clinical indications for which targets were found
+The filtered table is filtered to contain only clinical indications where the targets didn't yield any genes or panels identified.
 
 Output: `targets.html`
 
-![Alt text](images_readme/image1.png)
+![Alt text](images_readme/image2.png)
 
 ### Check the test methods
 
@@ -68,7 +68,7 @@ Output: `test_methods.html`
 
 Using the test directory and a genepanels file, the code compares the content of each clinical indication in the genepanels file and finds the corresponding test code or clinical indication code to find if the genepanels clinical indication contains the genepanels ci.
 
-The filtered tables are filtered to remove cases where both the `added` and `removed` columns are None.
+The filtered tables are filtered to contain clinical indications that had their gene content modified in some way.
 
 Output: `identical_tests.html` + `removed_tests.html` + `replaced_tests.html`
 
@@ -82,7 +82,7 @@ Output: `identical_tests.html` + `removed_tests.html` + `replaced_tests.html`
 
 The code will go through every test in the test directory and it will attempt to find tests missing from the genepanels file.
 
-The filtered table is filtered using the test methods that we have in our test directory parser config file.
+The filtered table is filtered to contain new clinical indications with a test method that we capture i.e. in the config file.
 
 Output: `new_cis.html`
 
