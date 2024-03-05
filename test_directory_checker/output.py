@@ -3,7 +3,21 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 import pandas as pd
 
+from test_directory_checker.utils import check_if_output_folder_exists, get_date
+
 ROOT_DIR = Path(__file__).absolute().parents[0]
+
+
+def mkdir_output_folder(output_folder):
+    date = get_date()
+    counter = 1
+
+    while check_if_output_folder_exists(output_folder, date, counter):
+        counter += 1 
+
+    folder_path = output_folder / f"{date}-{counter}"
+    folder_path.mkdir()
+    return folder_path
 
 
 def output_table(
@@ -21,7 +35,6 @@ def output_table(
         full_table
     """
 
-    output_folder.mkdir(exist_ok=True)
     environment = Environment(loader=FileSystemLoader(
         ROOT_DIR.joinpath("template")
     ))
@@ -32,7 +45,5 @@ def output_table(
         full_table=full_table.to_html()
     )
 
-    with open(
-        f"{output_folder}/{output_name}", mode="w", encoding="utf-8"
-    ) as f:
+    with open(output_folder / output_name, mode="w", encoding="utf-8") as f:
         f.write(content)
