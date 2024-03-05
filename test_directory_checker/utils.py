@@ -1,8 +1,28 @@
+import datetime
 import json
 from typing import Iterable
 
 import numpy as np
 import pandas as pd
+
+
+def get_date():
+    """ Return date as string in the following format: YYMMDD
+
+    Returns:
+        str: Datetime in string format
+    """
+
+    return datetime.datetime.now().strftime("%y%m%d")
+
+
+def check_if_output_folder_exists(output_path, date, counter):
+    full_path = output_path / f"{date}-{counter}"
+
+    if full_path.exists():
+        return True
+    else:
+        return False
 
 
 def parse_td(test_directory, config):
@@ -59,7 +79,7 @@ def parse_genepanels(genepanels):
     """
 
     return pd.read_csv(
-        genepanels, delimiter="\t", names=["ci", "panel", "gene"]
+        genepanels, delimiter="\t", names=["ci", "panel", "gene", "panelapp_id"]
     )
 
 
