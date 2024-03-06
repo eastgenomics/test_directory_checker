@@ -12,10 +12,9 @@ def main(args):
 
     command_line = " ".join(sys.argv)
 
-    config = utils.load_config("configs/column_config.json")
     td_config = utils.load_config(args["config"])
     blacklist_config = utils.load_config("configs/blacklist.json")
-    td_data = utils.parse_td(args["test_directory"], config)
+    td_data = utils.parse_td(args["test_directory"], td_config)
     hgnc_data = utils.parse_hgnc_dump(args["hgnc_dump"])
     genepanels_data = utils.parse_genepanels(args["genepanels"])
     signedoff_panels = queries.get_all_signedoff_panels()
