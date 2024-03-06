@@ -47,7 +47,8 @@ def main(args):
     reformatted_test_method_data = test_method_data.groupby(
         "Test Method"
     )["Test ID"].apply(list)
-    
+
+    # look for test methods not present in the ngs_test_methods in the config
     new_test_methods = reformatted_test_method_data[
         ~reformatted_test_method_data.index.isin(td_config["ngs_test_methods"])
     ]
