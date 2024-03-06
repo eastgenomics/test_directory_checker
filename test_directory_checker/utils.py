@@ -49,19 +49,27 @@ def parse_td(test_directory, config):
     """
 
     xls = pd.read_excel(
-        test_directory, sheet_name=None, header=config["header_index"]
+        test_directory,
+        sheet_name=config["sheet_of_interest"],
+        header=config["header_index"]
     )
 
-    for sheet in xls:
-        if sheet == config["sheet_of_interest"]:
-            data = xls[sheet].loc(axis=1)[
-                config["clinical_indication_column_code"],
-                config["clinical_indication_column_name"],
-                config["panel_column"],
-                config["test_method_column"]
-            ]
+    data = xls.loc(axis=1)[
+        config["clinical_indication_column_code"],
+        config["clinical_indication_column_name"],
+        config["panel_column"],
+        config["test_method_column"],
+        config["ngs_column"]
+    ]
 
-    return data
+    # # filter using the NGS tests used in the lab
+    filtered_data = data.loc[
+        data[
+            config["ngs_column"]
+        ].isin(config["ngs_type"])
+    ]
+
+    return filtered_data
 
 
 def parse_hgnc_dump(hgnc_file):
