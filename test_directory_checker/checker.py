@@ -91,6 +91,10 @@ def compare_gp_td(
 
     # go through every test ID in the genepanels file
     for gemini_name in genepanels_data["ci"].unique():
+        if gemini_name.startswith("C"):
+            print("'C' clinical indications are bespoke, skipping")
+            continue
+
         data = {
             "gemini_name": None, "panel": None, "genes": None, "td_ci": None,
             "td_target": None, "td_genes": None, "removed": None, "added": None
@@ -109,10 +113,6 @@ def compare_gp_td(
 
         data["panel"] = ", ".join(data_for_r_code["panel"].unique())
         data["genes"] = ", ".join(sorted(list(genepanels_genes)))
-
-        if gemini_name.startswith("C"):
-            print("'C' clinical indications are bespoke, skipping")
-            continue
 
         # filter td data using the r-code
         td_for_test_id = td_data[

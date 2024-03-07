@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+import sys
 
 from panelapp import queries
 
@@ -9,10 +10,11 @@ from test_directory_checker import checker, utils, output
 def main(args):
     ### setup logic ###
 
-    config = utils.load_config("configs/column_config.json")
+    command_line = " ".join(sys.argv)
+
     td_config = utils.load_config(args["config"])
     blacklist_config = utils.load_config("configs/blacklist.json")
-    td_data = utils.parse_td(args["test_directory"], config)
+    td_data = utils.parse_td(args["test_directory"], td_config)
     hgnc_data = utils.parse_hgnc_dump(args["hgnc_dump"])
     genepanels_data = utils.parse_genepanels(args["genepanels"])
     signedoff_panels = queries.get_all_signedoff_panels()
@@ -40,6 +42,15 @@ def main(args):
             "Potential new test methods"
         ]
     )
+    # sort test method df to be test method --> test codes
+    reformatted_test_method_data = test_method_data.groupby(
+        "Test Method"
+    )["Test ID"].apply(list)
+
+    # look for test methods not present in the ngs_test_methods in the config
+    new_test_methods = reformatted_test_method_data[
+        ~reformatted_test_method_data.index.isin(td_config["ngs_test_methods"])
+    ]
 
     # setup the locus status dict
     gene_locus_type = utils.get_locus_status_genes(
@@ -65,7 +76,7 @@ def main(args):
 
     # get all the genes to check in the database from the target dataframe
     genes_to_check = utils.get_genes_from_td_target(
-        target_data, signedoff_panels, gene_locus_type
+        target_data, signedoff_panels, gene_locus_type, blacklist_config
     )
 
     # check the presence of genes and clinical transcript in the given database
@@ -78,20 +89,23 @@ def main(args):
 
     output_folder = Path(args["output"])
 
+    created_output_folder = output.mkdir_output_folder(output_folder)
+    output.log_command_line(created_output_folder, command_line)
+
     # filter tests have None in both the removed and added columns
     filtered_df = utils.filter_out_df(
         identical_tests, removed=None, added=None
     )
     output.output_table(
-        identical_tests, "identical_tests.html", output_folder, filtered_df
+        identical_tests, "identical_tests.html", created_output_folder, filtered_df
     )
 
-    output.output_table(removed_tests, "removed_tests.html", output_folder)
+    output.output_table(removed_tests, "removed_tests.html", created_output_folder)
 
     # filter out tests have None in both the removed and added columns
     filtered_df = utils.filter_out_df(replaced_tests, removed=None, added=None)
     output.output_table(
-        replaced_tests, "replaced_tests.html", output_folder, filtered_df
+        replaced_tests, "replaced_tests.html", created_output_folder, filtered_df
     )
 
     # filter out tests that have empty lists in the Identified panels and
@@ -105,24 +119,14 @@ def main(args):
         )
     ]
     output.output_table(
-        target_data, "targets.html", output_folder, filtered_df
+        target_data, "targets.html", created_output_folder, filtered_df
     )
 
     # filter out tests that have an empty string in the Potential new test
     # methods column
-    filtered_df = utils.filter_out_df(
-        test_method_data, **{"Potential new test methods": ""}
+    output.output_test_methods(
+        new_test_methods, "test_methods.html", created_output_folder
     )
-    output.output_table(
-        test_method_data, "test_methods.html", output_folder, filtered_df
-    )
-
-    # filter using tests that are present in the test methods in the passed
-    # config file
-    filtered_df = new_cis[
-        new_cis["Test Method"].isin(td_config["ngs_test_methods"])
-    ]
-    output.output_table(new_cis, "new_cis.html", output_folder, filtered_df)
 
     # filter to get tests that have False in the presence_in_db or
     # has_clinical_transcript columns
@@ -135,7 +139,7 @@ def main(args):
         )
     ]
     output.output_table(
-        presence_db_df, "presence_in_db.html", output_folder, filtered_df
+        presence_db_df, "presence_in_db.html", created_output_folder, filtered_df
     )
 
 
