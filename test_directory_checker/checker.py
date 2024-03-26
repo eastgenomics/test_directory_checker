@@ -133,7 +133,7 @@ def compare_gp_td(
             # didn't find the test ID, use clinical indication ID to find
             # equivalence
             td_for_r_code = td_data[
-                td_data["Test ID"].str.contains(r_code.split(".")[0])
+                td_data["Test ID"].str.contains(f"^{r_code.split('.')[0]}\.")
             ]
 
             if td_for_r_code.shape[0] == 0:

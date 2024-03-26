@@ -103,5 +103,5 @@ Output: `presence_in_db.html`
 The unit tests check the functions of the `checker.py` file. These are the main functions used to check the content of the test directory.
 
 ```bash
-py.test -s tests/test_checker.py --td tests/test_files/test_td.tsv --genepanels tests/test_files/test_genepanels.tsv --hgnc_dump ${hgnc_dump} --config tests/test_files/test_config.json
+py.test -s tests/test_checker.py --td tests/test_files/test_td.tsv --genepanels tests/test_files/test_genepanels.tsv --hgnc_dump ${hgnc_dump} --config tests/test_files/test_config.json --blacklist_config configs/blacklist.json
 ```
